@@ -1,0 +1,5 @@
+# Normalise line endings: LF in the repo and on checkout, on every OS.
+* text=auto eol=lf
+
+# The vendored spec is generated upstream — collapse it in diffs / language stats.
+openapi.json linguist-generated=true

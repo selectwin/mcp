@@ -1,0 +1,13 @@
+# deps & build
+/node_modules
+/dist
+*.tsbuildinfo
+
+# env & misc
+.env
+.env*.local
+.DS_Store
+*.log
+
+# NOTE: openapi.json IS committed — the vendored spec that drives the API tools
+# (refresh with scripts/sync-spec.mjs). Do not ignore it.
