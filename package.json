@@ -8,9 +8,10 @@
   "bin": { "selectwin-mcp": "./dist/stdio.js" },
   "main": "./dist/server.js",
   "types": "./dist/server.d.ts",
-  "files": ["dist", "src", "openapi.json", "README.md"],
+  "files": ["dist/**/*.js", "dist/**/*.d.ts", "src", "openapi.json", "README.md"],
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "npm run build",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "start:http": "node dist/http.js",
@@ -29,6 +30,9 @@
     "vitest": "^2.1.0"
   },
   "repository": { "type": "git", "url": "https://github.com/selectwin/mcp.git" },
-  "homepage": "https://docs.selectwin.io",
-  "keywords": ["selectwin", "mcp", "model-context-protocol", "payments", "api", "docs"]
+  "bugs": { "url": "https://github.com/selectwin/mcp/issues" },
+  "homepage": "https://selectwin.io/docs",
+  "author": "Selectwin <dev@selectwin.io>",
+  "publishConfig": { "access": "public" },
+  "keywords": ["selectwin", "mcp", "model-context-protocol", "ai", "llm", "payments", "pix", "boleto", "api", "docs", "brazil"]
 }
