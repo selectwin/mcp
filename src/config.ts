@@ -15,7 +15,14 @@ export interface ServerConfig {
   fetchImpl?: typeof fetch;
 }
 
-export const MCP_VERSION = '0.1.0';
+declare const __MCP_VERSION__: string | undefined;
+/**
+ * Server version — injected at build from package.json (the single source of
+ * truth), so the User-Agent can never drift from the published version. Falls
+ * back to `0.0.0-dev` when run unbundled without the define.
+ */
+export const MCP_VERSION: string =
+  typeof __MCP_VERSION__ === 'string' ? __MCP_VERSION__ : '0.0.0-dev';
 
 const strip = (u: string) => u.replace(/\/+$/, '');
 
