@@ -63,7 +63,7 @@ npx @modelcontextprotocol/inspector
 |-----|---------|---------|
 | `SELECTWIN_API_KEY` | — | SelectKey for stdio (HTTP takes it from the `selectkey` header) |
 | `SELECTWIN_API_URL` | `https://api.selectwin.io` | API base (host-locked target) |
-| `SELECTWIN_DOCS_URL` | `https://docs.selectwin.io` | docs site used by the docs tools |
+| `SELECTWIN_DOCS_URL` | `https://selectwin.io` | docs site used by the docs tools |
 | `MCP_ENABLE_WRITES` | `false` | allow non-GET API calls |
 | `MCP_ENABLE_FINANCIAL_WRITES` | `false` | allow financial mutations (transactions/withdrawals/refund/…) |
 | `PORT` / `MCP_PATH` | `3000` / `/mcp` | HTTP host |

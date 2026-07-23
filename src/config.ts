@@ -28,7 +28,7 @@ const strip = (u: string) => u.replace(/\/+$/, '');
 
 export function configFromEnv(overrides: Partial<ServerConfig> = {}): ServerConfig {
   return {
-    docsUrl: strip(process.env.SELECTWIN_DOCS_URL || 'https://docs.selectwin.io'),
+    docsUrl: strip(process.env.SELECTWIN_DOCS_URL || 'https://selectwin.io'),
     apiUrl: strip(process.env.SELECTWIN_API_URL || 'https://api.selectwin.io'),
     selectKey: process.env.SELECTWIN_API_KEY || undefined,
     enableWrites: process.env.MCP_ENABLE_WRITES === 'true',
