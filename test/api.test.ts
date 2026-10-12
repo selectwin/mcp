@@ -68,6 +68,27 @@ describe('callApi', () => {
     expect(calls[0].url).toBe('https://api.selectwin.io/v1/transactions');
   });
 
+  it('default-deny: splits, checkout pay, coupons, webhooks, cards and deletes need the financial flag (SDK-1)', async () => {
+    for (const operationId of [
+      'addSubscriptionSplit',
+      'submitCheckoutPayment',
+      'renewSubscriptionCycle',
+      'createCoupon',
+      'createWebhookEndpoint',
+      'rotateWebhookSecret',
+      'createCard',
+      'deleteCustomer',
+      'updateProductVariant',
+    ]) {
+      await expect(callApi(base({ enableWrites: true }), { operationId, body: {}, pathParams: { subscriptionId: 's', sessionId: 's', id: 'w', customerId: 'c', productId: 'p', variantId: 'v' } }))
+        .rejects.toThrow(/FINANCIAL\/SENSITIVE/);
+    }
+    // A standard write still works with MCP_ENABLE_WRITES alone.
+    const { calls, fetchImpl } = capturing(201, { id: 'adr_1' });
+    await callApi(base({ enableWrites: true, fetchImpl }), { operationId: 'createAddress', body: { postcode: '01001000' } });
+    expect(calls).toHaveLength(1);
+  });
+
   it('requires a SelectKey and a known operationId', async () => {
     await expect(
       callApi(base({ selectKey: undefined }), { operationId: 'getBalance' }),

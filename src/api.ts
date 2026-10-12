@@ -1,7 +1,7 @@
 /** API tool — a host-locked fetch client to api.selectwin.io, driven by the spec. */
 import { randomUUID } from 'node:crypto';
 import type { ServerConfig } from './config.js';
-import { findOperation, isFinancialPath, isMutation, type Operation } from './spec.js';
+import { findOperation, isMutation, isSensitiveWrite, type Operation } from './spec.js';
 
 export interface CallApiInput {
   operationId: string;
@@ -54,9 +54,10 @@ export async function callApi(config: ServerConfig, input: CallApiInput): Promis
       `Operation '${op.operationId}' is a write (${op.method}) and writes are disabled. Set MCP_ENABLE_WRITES=true to allow.`,
     );
   }
-  if (isMutation(op.method) && isFinancialPath(op.path) && !config.enableFinancialWrites) {
+  if (isSensitiveWrite(op) && !config.enableFinancialWrites) {
     throw new ApiToolError(
-      `Operation '${op.operationId}' is a FINANCIAL write and is disabled. Set MCP_ENABLE_FINANCIAL_WRITES=true (and confirm with the user) to allow.`,
+      `Operation '${op.operationId}' is a FINANCIAL/SENSITIVE write (moves money, sends data elsewhere or deletes) and is disabled. ` +
+        'Set MCP_ENABLE_FINANCIAL_WRITES=true (and confirm with the user) to allow.',
     );
   }
   if (!config.selectKey) {

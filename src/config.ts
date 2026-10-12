@@ -8,7 +8,11 @@ export interface ServerConfig {
   selectKey?: string;
   /** Allow non-GET (mutating) API calls. Off by default. */
   enableWrites: boolean;
-  /** Allow financial mutations (transactions/withdrawals/refund/dispute/capture). Off by default. */
+  /**
+   * Allow financial/SENSITIVE mutations: money (transactions, withdrawals, refund, dispute, capture, checkout pay),
+   * subscriptions and splits, coupons, cards, wallets, webhooks, price edits, deletes — every write outside the standard
+   * allowlist in `spec.ts`. Off by default.
+   */
   enableFinancialWrites: boolean;
   userAgent: string;
   /** Injectable fetch (tests). Defaults to the global fetch. */

@@ -65,13 +65,20 @@ npx @modelcontextprotocol/inspector
 | `SELECTWIN_API_URL` | `https://api.selectwin.io` | API base (host-locked target) |
 | `SELECTWIN_DOCS_URL` | `https://selectwin.io` | docs site used by the docs tools |
 | `MCP_ENABLE_WRITES` | `false` | allow non-GET API calls |
-| `MCP_ENABLE_FINANCIAL_WRITES` | `false` | allow financial mutations (transactions/withdrawals/refund/…) |
+| `MCP_ENABLE_FINANCIAL_WRITES` | `false` | allow financial/sensitive mutations — everything outside the standard write allowlist (see Safety) |
 | `PORT` / `MCP_PATH` | `3000` / `/mcp` | HTTP host |
 
 ## Safety
 
-- **Read-only by default.** Writes are gated behind `MCP_ENABLE_WRITES`; money-moving operations
-  behind a second flag (`MCP_ENABLE_FINANCIAL_WRITES`) — never enable autonomous financial writes.
+- **Read-only by default.** Writes are gated behind `MCP_ENABLE_WRITES`, which alone allows ONLY a short allowlist
+  of low-risk edits: create/update customers and addresses, create products and variants, build checkout sessions and
+  payment links, validate a coupon, test a webhook. Everything else — money (transactions, withdrawals, refunds,
+  captures, disputes, checkout pay), subscriptions and revenue splits, coupons, cards, wallets, webhook endpoints and
+  secrets, product/variant edits (prices), every DELETE, and any operation added to the API later — is a
+  financial/sensitive write behind a second flag (`MCP_ENABLE_FINANCIAL_WRITES`). Never enable it for an autonomous
+  agent.
+- **API responses are marked as untrusted data.** Names, descriptions and metadata come from buyers and merchants;
+  the `call_api` output tells the model not to follow instructions inside it.
 - **Host-locked.** API calls only ever go to the configured Selectwin API origin.
 - **The SelectKey is never logged.** An `X-Idempotency-Key` is added to every write.
 - No polling loops — the docs steer assistants toward webhooks.

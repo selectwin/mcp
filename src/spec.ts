@@ -17,6 +17,32 @@ const METHODS = ['get', 'post', 'put', 'patch', 'delete'];
 /** Financial resources: mutating these moves money and needs the extra flag. */
 const FINANCIAL = /\/(transactions|withdrawals|charges|refunds?|disputes?|payouts?)\b|\/(refund|capture|dispute)\b/i;
 
+/**
+ * The ONLY writes allowed with `MCP_ENABLE_WRITES` alone: low-risk catalog/CRM edits that neither move money, nor send
+ * data to a new place, nor delete anything. Every other write — and any operation added to the spec later — is
+ * SENSITIVE and also needs `MCP_ENABLE_FINANCIAL_WRITES` (default-deny; company security sweep 12/10/2026, SDK-1).
+ *
+ * Why an allowlist and not the path regex alone: the regex let 41 writes through as "non-financial", among them
+ * revenue splits to another company (`addSubscriptionSplit`), paying a checkout with a stored card
+ * (`submitCheckoutPayment`), billing a subscription cycle, coupons, webhooks that ship every event (with PII) to any URL,
+ * secret rotation, price changes and every DELETE — all reachable by a prompt injection in a customer or product name.
+ */
+const STANDARD_WRITES: ReadonlySet<string> = new Set([
+  'createCustomer',
+  'updateCustomer',
+  'updateCustomer__put',
+  'createAddress',
+  'updateAddress',
+  'updateAddress__patch',
+  'createProduct',
+  'createProductVariant',
+  'createCheckoutSession',
+  'updateCheckoutSession',
+  'createCheckoutPaymentLink',
+  'validateCoupon',
+  'testWebhookEndpoint',
+]);
+
 let cache: Operation[] | null = null;
 
 export function listOperations(): Operation[] {
@@ -51,6 +77,15 @@ export function isMutation(method: string): boolean {
 
 export function isFinancialPath(path: string): boolean {
   return FINANCIAL.test(path);
+}
+
+/**
+ * A write that needs the second flag: money-moving (the financial paths), or simply not on the standard allowlist —
+ * splits, subscriptions, checkout pay, coupons, cards, wallets, webhooks, price edits, deletes, and anything new.
+ */
+export function isSensitiveWrite(op: Pick<Operation, 'method' | 'path' | 'operationId'>): boolean {
+  if (!isMutation(op.method)) return false;
+  return isFinancialPath(op.path) || !STANDARD_WRITES.has(op.operationId);
 }
 
 /** A compact reference: operations grouped by tag, for `list_api_reference`. */
