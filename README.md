@@ -118,13 +118,8 @@ src/
   spec.ts     # vendored openapi.json access (operations, HOSTED_READS, reference summary, operation detail)
   config.ts   # ServerConfig + env parsing
 openapi.json  # vendored spec — synced weekly from selectwin.io (spec-sync workflow)
+docker/       # the hosted deployment (how it ships: the header of docker/stack/app.yml)
 ```
-
-## Deploy (mcp.selectwin.io)
-
-No hand step: a push to `main` that touches the server runs `image.yml`, which tests, pushes
-`ghcr.io/selectwin/mcp:sha-<7>` and pins `docker/stack/app.yml` to it in a `deploy(image): …` commit; the Dokploy
-stack deploys that commit. `spec-sync.yml` refreshes `openapi.json` every Monday and redeploys when it changed.
 
 ## Development
 
