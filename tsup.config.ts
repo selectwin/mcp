@@ -9,7 +9,7 @@ const { version } = JSON.parse(
 export default defineConfig({
   entry: ['src/server.ts', 'src/http.ts', 'src/stdio.ts'],
   format: ['esm'],
-  target: 'node18',
+  target: 'node20',
   clean: true,
   dts: { entry: { server: 'src/server.ts' } },
   sourcemap: true,
