@@ -110,3 +110,39 @@ describe('hosted MCP with OAuth', () => {
     expect((await fetch(`${base}/mcp`, { method: 'DELETE' })).status).toBe(405);
   });
 });
+
+describe('the 2026-07-28 protocol (SDK v2): a modern client on the same endpoint', () => {
+  async function modernClient(headers: Record<string, string> = {}) {
+    const { Client, StreamableHTTPClientTransport } = await import('@modelcontextprotocol/client');
+    const client = new Client({ name: 'modern-test', version: '0.0.0' }, { versionNegotiation: { mode: { pin: '2026-07-28' } } });
+    const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`), { requestInit: { headers } });
+    await client.connect(transport);
+    return client;
+  }
+
+  it('connects without initialize, lists the tools and runs a docs tool anonymously', async () => {
+    const client = await modernClient();
+    expect(client.getProtocolEra()).toBe('modern');
+    expect(client.getNegotiatedProtocolVersion()).toBe('2026-07-28');
+    const tools = (await client.listTools()).tools.map((t) => t.name).sort();
+    expect(tools).toEqual(['call_api', 'get_llms_txt', 'get_operation', 'list_api_reference', 'search_docs']);
+    const ref = await client.callTool({ name: 'list_api_reference', arguments: {} });
+    expect((ref.content as Array<{ text: string }>)[0]!.text).toContain('getBalance [callable]');
+    await client.close();
+  });
+
+  it('a SelectKey caller runs call_api in the modern era too', async () => {
+    const client = await modernClient({ selectkey: 'sk_test_modern' });
+    const res = await client.callTool({ name: 'call_api', arguments: { operationId: 'getBalance' } });
+    expect((res.content as Array<{ text: string }>)[0]!.text).toContain('42');
+    expect(apiCalls.at(-1)!.headers.selectkey).toBe('sk_test_modern');
+    await client.close();
+  });
+
+  it('call_api without a credential is still the HTTP 401 that asks the client to sign in', async () => {
+    const client = await modernClient();
+    await expect(client.callTool({ name: 'call_api', arguments: { operationId: 'getBalance' } })).rejects.toThrow();
+    expect(apiCalls).toHaveLength(0);
+    await client.close();
+  });
+});

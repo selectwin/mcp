@@ -12,8 +12,9 @@
  * The guards in `guard.ts` run first: Host and Origin, a per-IP rate limit and a body cap. Logs go to stderr, one JSON
  * line per MCP request, and never include a key or a token.
  */
-import { createServer as createHttpServer, type Server, type ServerResponse } from 'node:http';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { createServer as createHttpServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+import { Readable } from 'node:stream';
+import { createMcpHandler, type AuthInfo } from '@modelcontextprotocol/server';
 import { MCP_VERSION, configFromEnv } from './config.js';
 import { createServer } from './server.js';
 import { bearerOf, clientIp, createRateLimiter, hostAllowed, keyKind, needsAccount, originAllowed, readBody, selectKeyOf } from './guard.js';
@@ -48,7 +49,57 @@ function describe(body: unknown): { rpc?: string; tool?: string; op?: string } {
   return { rpc: str(msg.method), tool: str(msg.params?.name), op: str(msg.params?.arguments?.operationId) };
 }
 
+/** What a request authenticated with, carried to the server factory in `authInfo.extra` (in-process, never logged). */
+interface RequestCredential {
+  selectKey?: string;
+  apiToken?: string;
+}
+
+/** The web `Request` the SDK handler serves, from the Node request whose body this host already read and capped. */
+function toWebRequest(req: IncomingMessage, raw: string): Request {
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(req.headers)) {
+    if (value === undefined) continue;
+    for (const v of Array.isArray(value) ? value : [value]) headers.append(name, v);
+  }
+  const url = `http://${req.headers.host ?? "localhost"}${req.url ?? "/"}`;
+  return new Request(url, { method: req.method, headers, body: raw });
+}
+
+/** Write the SDK handler's web `Response` (JSON or an SSE stream) back to the Node response. */
+async function sendWebResponse(res: ServerResponse, response: Response): Promise<void> {
+  const headers: Record<string, string> = {};
+  response.headers.forEach((value, name) => {
+    headers[name] = value;
+  });
+  res.writeHead(response.status, headers);
+  if (!response.body) {
+    res.end();
+    return;
+  }
+  const body = Readable.fromWeb(response.body as import("node:stream/web").ReadableStream);
+  res.on("close", () => body.destroy());
+  body.pipe(res);
+}
+
 export function createMcpHttpServer(options: McpHttpOptions): Server {
+  // SDK v2: ONE handler for the life of the server; the factory builds a fresh MCP server per request (stateless) from
+  // that request's credential. It serves 2025-era clients (initialize, through the stateless legacy fallback) and
+  // 2026-07-28 ones (server/discover + the per-request envelope) at the same endpoint.
+  const handler = createMcpHandler(
+    (ctx) => {
+      const cred = (ctx.authInfo?.extra ?? {}) as RequestCredential;
+      return createServer(
+        configFromEnv({
+          selectKey: cred.apiToken ? undefined : cred.selectKey,
+          apiToken: cred.apiToken,
+          ...(options.oauth ? { oauth: { issuer: options.oauth.resource.issuer, resource: options.oauth.resource.resource } } : {}),
+          ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
+        }),
+      );
+    },
+    { maxRequestBodySize: MAX_BODY_BYTES },
+  );
   const limiter = createRateLimiter(options.rateLimitPerMinute);
   const sweeper = setInterval(() => limiter.sweep(), 60_000);
   sweeper.unref();
@@ -151,23 +202,14 @@ export function createMcpHttpServer(options: McpHttpOptions): Server {
       return;
     }
 
-    const server = createServer(
-      configFromEnv({
-        selectKey: apiToken ? undefined : selectKey,
-        apiToken,
-        ...(options.oauth ? { oauth: { issuer: options.oauth.resource.issuer, resource: options.oauth.resource.resource } } : {}),
-        ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
-      }),
-    );
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-    res.on('close', () => {
-      void transport.close();
-      void server.close();
-    });
-
+    const credential: RequestCredential = { selectKey: apiToken ? undefined : selectKey, apiToken };
+    const authInfo: AuthInfo | undefined =
+      credential.selectKey || credential.apiToken
+        ? { token: credential.apiToken ?? credential.selectKey!, clientId: apiToken ? "oauth" : "selectkey", scopes: [], extra: { ...credential } }
+        : undefined;
     try {
-      await server.connect(transport);
-      await transport.handleRequest(req, res, body);
+      const response = await handler.fetch(toWebRequest(req, read.raw), { authInfo, parsedBody: body });
+      await sendWebResponse(res, response);
     } catch {
       if (!res.headersSent) json(res, 500, rpcError(-32603, 'Internal server error'));
     }
@@ -178,7 +220,10 @@ export function createMcpHttpServer(options: McpHttpOptions): Server {
   http.keepAliveTimeout = 75_000;
   http.headersTimeout = 76_000;
   http.requestTimeout = 65_000;
-  http.on('close', () => clearInterval(sweeper));
+  http.on('close', () => {
+    clearInterval(sweeper);
+    void handler.close();
+  });
   return http;
 }
 

@@ -1,9 +1,10 @@
 /**
  * The Selectwin MCP server — documentation tools (public, read-only) + an API
- * tool (SelectKey-authed, write-gated). Build one per request (HTTP, so tools
- * close over that request's SelectKey) or once from env (stdio).
+ * tool (SelectKey- or OAuth-authed, write-gated). Built per request (HTTP: the factory of `createMcpHandler`, so tools
+ * close over that request's credential) or per connection (stdio). SDK v2: the same instance serves 2025-era clients
+ * (initialize) and 2026-07-28 ones (per-request envelope).
  */
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import { MCP_VERSION, type ServerConfig } from './config.js';
 import { searchDocs, getLlmsTxt } from './docs.js';
@@ -30,10 +31,10 @@ export function createServer(config: ServerConfig): McpServer {
       title: 'Search Selectwin docs',
       description:
         'Full-text search across the Selectwin documentation and API reference. Returns matching pages with links.',
-      inputSchema: {
+      inputSchema: z.object({
         query: z.string().min(1).describe('What to look for, e.g. "create a PIX transaction".'),
         limit: z.number().int().min(1).max(30).optional().describe('Max results (default 10).'),
-      },
+      }),
       annotations: { readOnlyHint: true },
       ...noAuth,
     },
@@ -54,9 +55,9 @@ export function createServer(config: ServerConfig): McpServer {
         'Fetch the Selectwin docs as plain text. Without arguments: the index (llms.txt), which lists the products and ' +
         'the docs sectors. With `sector`: that sector in full, e.g. "pagamentos", "recebiveis-e-saques", "checkout", ' +
         '"marketplace", "webhooks", "sdks".',
-      inputSchema: {
+      inputSchema: z.object({
         sector: z.string().optional().describe('A sector slug from llms.txt (the name in /llms/<sector>.txt).'),
-      },
+      }),
       annotations: { readOnlyHint: true },
       ...noAuth,
     },
@@ -78,7 +79,7 @@ export function createServer(config: ServerConfig): McpServer {
           'hosted server can run with `call_api` are marked [callable]; use `get_operation` for an operation\'s contract.'
         : 'List every Selectwin API operation (operationId, method, path, summary) grouped by resource. Use an ' +
           'operationId with `call_api`, and `get_operation` for its contract.',
-      inputSchema: {},
+      inputSchema: z.object({}),
       annotations: { readOnlyHint: true },
       ...noAuth,
     },
@@ -92,9 +93,9 @@ export function createServer(config: ServerConfig): McpServer {
       description:
         'Return one Selectwin API operation from the OpenAPI document — parameters, request body and responses with ' +
         'the schemas inlined. Use it before `call_api` to know the path params, filters and fields.',
-      inputSchema: {
+      inputSchema: z.object({
         operationId: z.string().min(1).describe('e.g. "listTransactions" (see list_api_reference).'),
-      },
+      }),
       annotations: { readOnlyHint: true },
       ...noAuth,
     },
@@ -122,13 +123,13 @@ export function createServer(config: ServerConfig): McpServer {
           'wallets, webhooks, price edits, deletes) also require MCP_ENABLE_FINANCIAL_WRITES. ' + untrusted,
       annotations: config.hosted ? { readOnlyHint: true, openWorldHint: false } : { openWorldHint: false },
       ...accountAuth,
-      inputSchema: {
+      inputSchema: z.object({
         operationId: z.string().min(1).describe('e.g. "getBalance", "listTransactions", "createCustomer".'),
         pathParams: z.record(z.string(), z.string()).optional().describe('Path params, e.g. { "customerId": "cus_..." }.'),
         query: z.record(z.string(), z.any()).optional().describe('Query params, e.g. { "limit": 20 }.'),
         body: z.record(z.string(), z.any()).optional().describe('JSON request body for writes.'),
         idempotencyKey: z.string().optional().describe('Override the auto X-Idempotency-Key on writes.'),
-      },
+      }),
     },
     async (input) => {
       try {

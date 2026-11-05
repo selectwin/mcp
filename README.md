@@ -11,6 +11,9 @@ Two ways to use it:
 | Account access | **read-only**: 56 curated reads (balance, sales, receivables, withdrawals, checkout, catalog, subscriptions, coupons, simulators, customers, webhooks, marketplace) | every read; writes behind flags (see Safety) |
 | Auth | **sign in with your Selectwin account** (OAuth) — or your SelectKey in the `selectkey` header | `SELECTWIN_API_KEY` |
 
+Both speak every current MCP revision on the same endpoint: the 2025 ones (`initialize`) and **2026-07-28** (no
+sessions, `server/discover`, the per-request envelope).
+
 ## Connect to the hosted server — sign in
 
 No key to copy: the assistant opens the Selectwin dashboard, you sign in as always and allow it. The docs tools work
