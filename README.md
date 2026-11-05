@@ -1,19 +1,33 @@
 # @selectwin/mcp
 
-Official **Selectwin** MCP server — lets AI assistants (Claude Code, Cursor, VS Code, Claude Desktop, …) **read the
-Selectwin docs** and **query your Selectwin account** over the Model Context Protocol.
+Official **Selectwin** MCP server — lets AI assistants (claude.ai, Claude Desktop, Claude Code, ChatGPT, Cursor, VS Code, …)
+**read the Selectwin docs** and **query your Selectwin account** over the Model Context Protocol.
 
 Two ways to use it:
 
 | | Hosted — `https://mcp.selectwin.io/mcp` | Local — `npx -y @selectwin/mcp` |
 |---|---|---|
-| Install | nothing | Node 18+ |
+| Install | nothing | Node 20+ |
 | Account access | **read-only**: 56 curated reads (balance, sales, receivables, withdrawals, checkout, catalog, subscriptions, coupons, simulators, customers, webhooks, marketplace) | every read; writes behind flags (see Safety) |
-| Auth | your SelectKey in the `selectkey` header | `SELECTWIN_API_KEY` |
+| Auth | **sign in with your Selectwin account** (OAuth) — or your SelectKey in the `selectkey` header | `SELECTWIN_API_KEY` |
 
-The environment (sandbox/production) follows the key prefix (`sk_test_` / `sk_live_`). Use a `sk_test_` key to try it.
+## Connect to the hosted server — sign in
 
-## Connect to the hosted server
+No key to copy: the assistant opens the Selectwin dashboard, you sign in as always and allow it. The docs tools work
+before you sign in; the assistant asks you to connect the first time it needs your account.
+
+- **claude.ai / Claude Desktop:** Settings → Connectors → **Add custom connector** → `https://mcp.selectwin.io/mcp`.
+- **Claude Code:** `claude mcp add --transport http selectwin https://mcp.selectwin.io/mcp`, then `/mcp` → **Authenticate**.
+- **ChatGPT:** add a connector (developer mode) with the URL `https://mcp.selectwin.io/mcp`.
+
+What you allow is **read-only** (`mcp:read`): the same 56 reads as above, on the company and environment you are signed
+into in the dashboard. It creates, changes and deletes nothing and moves no money. The connection shows up in
+**Account → Sessions**, and ending that session cuts it off.
+
+## Connect to the hosted server — with a SelectKey
+
+For clients configured by file. The environment (sandbox/production) follows the key prefix (`sk_test_` / `sk_live_`);
+use a `sk_test_` key to try it.
 
 **Claude Code**
 
@@ -43,7 +57,6 @@ claude mcp add --transport http selectwin https://mcp.selectwin.io/mcp --header 
 ```
 
 Clients that can only send a bearer token may use `Authorization: Bearer sk_…` instead of the `selectkey` header.
-Connectors that require OAuth (claude.ai, ChatGPT) are not supported yet — see Roadmap.
 
 ## Run locally (stdio)
 
@@ -86,6 +99,9 @@ Connectors that require OAuth (claude.ai, ChatGPT) are not supported yet — see
 | `MCP_ALLOWED_ORIGINS` | — | HTTP: browser origins accepted; a request with any other `Origin` is refused |
 | `MCP_CLIENT_IP_HEADER` | — | HTTP: header the edge writes with the client IP (else the socket peer) |
 | `MCP_RATE_LIMIT_PER_MIN` | `120` | HTTP: requests per minute per client IP |
+| `MCP_OAUTH_CLIENT_ID` / `MCP_OAUTH_CLIENT_SECRET` | — | HTTP: this server's client at the Selectwin authorization server, allowed to trade tokens (RFC 8693). Both set ⇒ OAuth on |
+| `MCP_RESOURCE_URL` | `https://mcp.selectwin.io/mcp` | HTTP: this server's canonical URI (RFC 8707) — the protected resource metadata `resource` |
+| `SELECTWIN_OAUTH_ISSUER` | `{SELECTWIN_API_URL}/v1/authentication/oauth` | HTTP: the authorization server |
 | `PORT` / `MCP_PATH` | `3000` / `/mcp` | HTTP host |
 
 ## Safety
@@ -102,7 +118,9 @@ Connectors that require OAuth (claude.ai, ChatGPT) are not supported yet — see
 - **API responses are marked as untrusted data.** Names, descriptions and metadata come from buyers and merchants; the
   `call_api` output tells the model not to follow instructions inside it.
 - **Host-locked.** API calls only ever go to the configured Selectwin API origin.
-- **The SelectKey is never logged.** The access log records the key's environment (`live`/`test`), never the key.
+- **The client's token is never passed on.** A signed-in client's token is for this server only; it is traded at the
+  authorization server for the same session's API token (RFC 8693), which never leaves this server.
+- **No key or token is ever logged.** The access log records only how the caller authenticated (`live`/`test`/`oauth`).
 - **HTTP guards:** `Host` and `Origin` checks, a per-IP rate limit, a 1 MB body cap, 30 s timeout on API calls.
 
 ## Architecture
@@ -110,8 +128,10 @@ Connectors that require OAuth (claude.ai, ChatGPT) are not supported yet — see
 ```
 src/
   server.ts   # createServer(config) — registers all tools + resources
-  http.ts     # Streamable HTTP host (stateless; SelectKey per request)
-  guard.ts    # HTTP guards: Host/Origin, rate limit, body cap, where the SelectKey comes from
+  app.ts      # the Streamable HTTP host (stateless; credential per request; the 401 that asks a client to sign in)
+  http.ts     # reads the env and listens
+  oauth.ts    # OAuth resource server: protected resource metadata, the challenge, the RFC 8693 token exchange
+  guard.ts    # HTTP guards: Host/Origin, rate limit, body cap, where the SelectKey / bearer token comes from
   stdio.ts    # stdio host (SelectKey from SELECTWIN_API_KEY)
   docs.ts     # docs tools (fetch the public docs endpoints)
   api.ts      # host-locked API client + hosted/write/financial gating
@@ -133,5 +153,4 @@ docker build -t selectwin-mcp . && docker run -p 3000:3000 -e MCP_HOSTED=true se
 
 ## Roadmap
 
-- OAuth 2.1 ("Connect with Selectwin") so OAuth-only connectors (claude.ai, ChatGPT) can use the hosted server.
 - Write confirmation UX via MCP elicitation for financial operations.

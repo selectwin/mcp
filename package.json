@@ -1,6 +1,6 @@
 {
   "name": "@selectwin/mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Selectwin MCP server — documentation + API tools over the Model Context Protocol.",
   "license": "MIT",
   "type": "module",
