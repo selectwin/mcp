@@ -21,7 +21,7 @@
 # Rollback:               IMAGE=ghcr.io/selectwin/mcp:sha-<7> no Environment + Deploy
 services:
   app:
-    image: ${IMAGE:-ghcr.io/selectwin/mcp:sha-1b8e0ab}
+    image: ${IMAGE:-ghcr.io/selectwin/mcp:sha-755730f}
     init: true
     stop_grace_period: 15s
     environment:
