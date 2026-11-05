@@ -57,6 +57,30 @@ export function selectKeyOf(req: Pick<IncomingMessage, 'headers'>): string | und
   return match?.[1];
 }
 
+/**
+ * An OAuth access token: `Authorization: Bearer <anything but an sk_ key>`. On the hosted server it is a token the
+ * Selectwin authorization server issued for this MCP server (claude.ai, ChatGPT, Claude Code sign the seller in).
+ */
+export function bearerOf(req: Pick<IncomingMessage, 'headers'>): string | undefined {
+  const auth = first(req.headers['authorization'])?.trim();
+  const match = auth?.match(/^Bearer\s+(\S+)$/i);
+  const token = match?.[1];
+  return token && !/^sk_/i.test(token) ? token : undefined;
+}
+
+/** The tools that act on the seller's account — the ones that need a credential (lazy auth: the docs tools do not). */
+const ACCOUNT_TOOLS: ReadonlySet<string> = new Set(['call_api']);
+
+/** Does this JSON-RPC message (or batch) call a tool that needs the seller's account? */
+export function needsAccount(body: unknown): boolean {
+  const messages = Array.isArray(body) ? body : [body];
+  return messages.some((m) => {
+    if (!m || typeof m !== 'object') return false;
+    const msg = m as { method?: unknown; params?: { name?: unknown } };
+    return msg.method === 'tools/call' && typeof msg.params?.name === 'string' && ACCOUNT_TOOLS.has(msg.params.name);
+  });
+}
+
 /** Which environment a key targets, for the access log (never the key itself). */
 export function keyKind(key: string | undefined): 'live' | 'test' | 'other' | 'none' {
   if (!key) return 'none';

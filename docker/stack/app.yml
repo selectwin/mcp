@@ -13,6 +13,9 @@
 #   IMAGE           Só para FIXAR outra versão ou voltar atrás (IMAGE=ghcr.io/selectwin/mcp:sha-<7>); tire a linha
 #                   depois, senão o stack fica preso naquele sha.
 #   RATE_LIMIT_PER_MIN  pedidos por minuto por IP (default 120).
+#   MCP_OAUTH_CLIENT_ID / MCP_OAUTH_CLIENT_SECRET   o cliente CONFIDENCIAL do node que pode trocar o token do app pelo
+#                   da API (RFC 8693, `oauthClients.tokenExchange`, mig 362 do node-api). Com os dois, liga o OAuth (o
+#                   "Connect" do claude.ai/ChatGPT); sem eles, só SelectKey. O segredo mora SÓ aqui (Environment).
 #
 # O MCP_HOSTED fica fixo aqui de propósito: é ele que deixa o servidor só-leitura (as 56 leituras de HOSTED_READS) e
 # ignora qualquer MCP_ENABLE_*_WRITES. Não vira knob.
@@ -32,6 +35,11 @@ services:
       MCP_ALLOWED_HOSTS: mcp.selectwin.io
       MCP_CLIENT_IP_HEADER: x-cabber-ip
       MCP_RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
+      # OAuth (RFC 9728/8707/8693): este servidor é o recurso; o node é o servidor de autorização.
+      MCP_RESOURCE_URL: https://mcp.selectwin.io/mcp
+      SELECTWIN_OAUTH_ISSUER: https://api.selectwin.io/v1/authentication/oauth
+      MCP_OAUTH_CLIENT_ID: ${MCP_OAUTH_CLIENT_ID:-}
+      MCP_OAUTH_CLIENT_SECRET: ${MCP_OAUTH_CLIENT_SECRET:-}
     ports:
       - target: 3000
         published: ${PUBLISHED_PORT:?defina uma porta de ingress LIVRE e ÚNICA no swarm em Dokploy › Environment}

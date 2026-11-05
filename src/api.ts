@@ -74,18 +74,20 @@ export async function callApi(config: ServerConfig, input: CallApiInput): Promis
         'Set MCP_ENABLE_FINANCIAL_WRITES=true (and confirm with the user) to allow.',
     );
   }
-  if (!config.selectKey) {
+  if (!config.selectKey && !config.apiToken) {
     throw new ApiToolError(
-      'Missing SelectKey. Send the `selectkey` header (or `Authorization: Bearer sk_…`) over HTTP, or set SELECTWIN_API_KEY (stdio).',
+      'Missing credentials. Sign in (OAuth), send the `selectkey` header (or `Authorization: Bearer sk_…`) over HTTP, or set SELECTWIN_API_KEY (stdio).',
     );
   }
 
   const url = buildUrl(config, op, input);
   const headers: Record<string, string> = {
-    selectkey: config.selectKey,
     'User-Agent': config.userAgent,
     Accept: 'application/json',
   };
+  // An OAuth caller's API token (from the exchange) wins; otherwise the SelectKey.
+  if (config.apiToken) headers.authorization = `Bearer ${config.apiToken}`;
+  else headers.selectkey = config.selectKey!;
   const init: RequestInit = { method: op.method, headers, signal: AbortSignal.timeout(API_TIMEOUT_MS) };
   if (isMutation(op.method)) {
     headers['X-Idempotency-Key'] = input.idempotencyKey ?? randomUUID();

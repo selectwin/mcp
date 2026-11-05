@@ -9,6 +9,7 @@ import { MCP_VERSION, type ServerConfig } from './config.js';
 import { searchDocs, getLlmsTxt } from './docs.js';
 import { apiReferenceSummary, operationDetail, spec } from './spec.js';
 import { ApiToolError, callApi } from './api.js';
+import { MCP_READ_SCOPE } from './oauth.js';
 
 type ToolResult = { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
 
@@ -17,6 +18,10 @@ const errorText = (s: string): ToolResult => ({ content: [{ type: 'text', text: 
 
 export function createServer(config: ServerConfig): McpServer {
   const server = new McpServer({ name: 'selectwin', version: MCP_VERSION });
+  // With OAuth on (hosted), every tool declares how it authenticates — what ChatGPT reads to offer sign-in only where a
+  // tool needs the account (the docs tools run anonymously; `call_api` needs `mcp:read`). Claude learns it from the 401.
+  const noAuth = config.oauth ? { _meta: { securitySchemes: [{ type: 'noauth' }] } } : {};
+  const accountAuth = config.oauth ? { _meta: { securitySchemes: [{ type: 'oauth2', scopes: [MCP_READ_SCOPE] }] } } : {};
 
   // --- Documentation tools (Phase 1, public) -------------------------------
   server.registerTool(
@@ -30,6 +35,7 @@ export function createServer(config: ServerConfig): McpServer {
         limit: z.number().int().min(1).max(30).optional().describe('Max results (default 10).'),
       },
       annotations: { readOnlyHint: true },
+      ...noAuth,
     },
     async ({ query, limit }) => {
       try {
@@ -52,6 +58,7 @@ export function createServer(config: ServerConfig): McpServer {
         sector: z.string().optional().describe('A sector slug from llms.txt (the name in /llms/<sector>.txt).'),
       },
       annotations: { readOnlyHint: true },
+      ...noAuth,
     },
     async ({ sector }) => {
       try {
@@ -73,6 +80,7 @@ export function createServer(config: ServerConfig): McpServer {
           'operationId with `call_api`, and `get_operation` for its contract.',
       inputSchema: {},
       annotations: { readOnlyHint: true },
+      ...noAuth,
     },
     async () => text(apiReferenceSummary({ hosted: config.hosted })),
   );
@@ -88,6 +96,7 @@ export function createServer(config: ServerConfig): McpServer {
         operationId: z.string().min(1).describe('e.g. "listTransactions" (see list_api_reference).'),
       },
       annotations: { readOnlyHint: true },
+      ...noAuth,
     },
     async ({ operationId }) => {
       const detail = operationDetail(operationId);
@@ -105,13 +114,14 @@ export function createServer(config: ServerConfig): McpServer {
     {
       title: 'Call the Selectwin API',
       description: config.hosted
-        ? 'Execute a Selectwin API READ by operationId with the caller\'s SelectKey. This hosted server is read-only and ' +
+        ? 'Execute a Selectwin API READ by operationId on the caller\'s account (signed in, or by SelectKey). This hosted server is read-only and ' +
           'runs only the operations marked [callable] in list_api_reference (balance, sales, receivables, withdrawals, ' +
           'checkout, catalog, subscriptions, coupons, simulators, customers, webhooks, marketplace). ' + untrusted
         : 'Execute a Selectwin API operation by operationId (see list_api_reference). Reads work with a SelectKey; ' +
           'writes require MCP_ENABLE_WRITES, and financial/sensitive writes (money, subscriptions, splits, coupons, cards, ' +
           'wallets, webhooks, price edits, deletes) also require MCP_ENABLE_FINANCIAL_WRITES. ' + untrusted,
       annotations: config.hosted ? { readOnlyHint: true, openWorldHint: false } : { openWorldHint: false },
+      ...accountAuth,
       inputSchema: {
         operationId: z.string().min(1).describe('e.g. "getBalance", "listTransactions", "createCustomer".'),
         pathParams: z.record(z.string(), z.string()).optional().describe('Path params, e.g. { "customerId": "cus_..." }.'),

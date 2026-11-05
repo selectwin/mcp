@@ -1,7 +1,7 @@
 import { Readable } from 'node:stream';
 import type { IncomingMessage } from 'node:http';
 import { describe, it, expect } from 'vitest';
-import { clientIp, createRateLimiter, csv, hostAllowed, keyKind, originAllowed, readBody, selectKeyOf } from '../src/guard';
+import { bearerOf, clientIp, createRateLimiter, csv, hostAllowed, keyKind, needsAccount, originAllowed, readBody, selectKeyOf } from '../src/guard';
 
 const req = (headers: Record<string, string>, remoteAddress = '10.0.0.2') =>
   ({ headers, socket: { remoteAddress } }) as unknown as IncomingMessage;
@@ -42,6 +42,17 @@ describe('guards', () => {
     expect(keyKind('sk_test_x')).toBe('test');
     expect(keyKind('whatever')).toBe('other');
     expect(keyKind(undefined)).toBe('none');
+  });
+
+  it('an OAuth bearer is any bearer but an sk_ key; only a call_api tool call needs the account', () => {
+    expect(bearerOf(req({ authorization: 'Bearer eyJhbGciOi.jwt' }))).toBe('eyJhbGciOi.jwt');
+    expect(bearerOf(req({ authorization: 'Bearer sk_live_abc' }))).toBeUndefined();
+    expect(bearerOf(req({ selectkey: 'sk_live_abc' }))).toBeUndefined();
+    expect(needsAccount({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'call_api', arguments: {} } })).toBe(true);
+    expect(needsAccount({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'search_docs', arguments: {} } })).toBe(false);
+    expect(needsAccount({ jsonrpc: '2.0', id: 1, method: 'tools/list' })).toBe(false);
+    expect(needsAccount({ jsonrpc: '2.0', id: 1, method: 'initialize' })).toBe(false);
+    expect(needsAccount([{ method: 'tools/list' }, { method: 'tools/call', params: { name: 'call_api' } }])).toBe(true);
   });
 
   it('rate-limits per key in a fixed window and forgets ended windows', () => {

@@ -19,6 +19,13 @@ export interface ServerConfig {
    * It overrides the write flags — no environment variable turns writes on for the hosted server.
    */
   hosted: boolean;
+  /**
+   * The caller's API token when it signed in with OAuth (hosted): what the RFC 8693 exchange returned for its token.
+   * Used instead of the SelectKey; never the client's own token (the MCP spec forbids passing that one through).
+   */
+  apiToken?: string;
+  /** OAuth on (hosted, with exchange credentials): the tools declare their security schemes. */
+  oauth?: { issuer: string; resource: string };
   userAgent: string;
   /** Injectable fetch (tests). Defaults to the global fetch. */
   fetchImpl?: typeof fetch;
