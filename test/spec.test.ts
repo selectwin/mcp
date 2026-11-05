@@ -1,9 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { listOperations, findOperation, isMutation, isFinancialPath, isSensitiveWrite, apiReferenceSummary } from '../src/spec';
+import {
+  HOSTED_READS,
+  apiReferenceSummary,
+  findOperation,
+  isFinancialPath,
+  isMutation,
+  isSensitiveWrite,
+  listOperations,
+  operationDetail,
+} from '../src/spec';
 
 describe('spec', () => {
   it('lists all operations', () => {
-    expect(listOperations().length).toBe(120);
+    // Not an exact count: the weekly spec-sync must pass when the API gains operations (new ones are default-deny).
+    expect(listOperations().length).toBeGreaterThanOrEqual(165);
   });
 
   it('finds an operation by id', () => {
@@ -38,5 +48,36 @@ describe('spec', () => {
     expect(summary).toContain('operations');
     expect(summary).toContain('getBalance');
     expect(summary).toContain('createCustomer');
+    expect(summary).not.toContain('[callable]');
+  });
+
+  it('the hosted reads are the 56 the owner chose, each one a GET that exists in the spec (a sync that drops one fails here)', () => {
+    expect(HOSTED_READS.size).toBe(56);
+    for (const id of HOSTED_READS) {
+      const op = findOperation(id);
+      expect(op, id).toBeDefined();
+      expect(op!.method, id).toBe('GET');
+    }
+    // Left out on purpose: stored cards, payout wallets (account and Pix key in clear), KYC-by-token, the raw trace.
+    for (const id of ['listCards', 'getCard', 'listWallets', 'getWallet', 'previewKycLink', 'listCheckoutSessionEvents']) {
+      expect(HOSTED_READS.has(id), id).toBe(false);
+    }
+  });
+
+  it('the hosted summary marks exactly the callable operations', () => {
+    const summary = apiReferenceSummary({ hosted: true });
+    expect(summary.match(/ \[callable\] — /g)).toHaveLength(HOSTED_READS.size);
+    expect(summary).toMatch(/- getBalance \[callable\] —/);
+    expect(summary).toMatch(/- getCard —/);
+  });
+
+  it('operationDetail inlines the schemas of one operation and stays small enough for a tool answer', () => {
+    const detail = operationDetail('getBalance')!;
+    expect(detail.method).toBe('GET');
+    expect(detail.path).toBe('/v1/balance');
+    expect(JSON.stringify(detail.responses)).not.toMatch(/"\$ref":"#\/components\/schemas\/Balance/);
+    expect(operationDetail('nope')).toBeUndefined();
+    const largest = Math.max(...listOperations().map((o) => JSON.stringify(operationDetail(o.operationId)).length));
+    expect(largest).toBeLessThan(150_000);
   });
 });

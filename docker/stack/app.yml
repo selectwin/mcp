@@ -1,0 +1,57 @@
+# Selectwin MCP — o servidor hospedado (mcp.selectwin.io) como stack Docker SWARM (Dokploy › serviço tipo "Stack").
+#
+# A imagem é pré-buildada e PUXADA, nunca buildada aqui: o workflow `image.yml` publica `ghcr.io/selectwin/mcp:sha-<7>`
+# e troca o sha abaixo num commit `deploy(image): …` — é esse commit que o Dokploy (Auto Deploy) aplica. Nenhum segredo
+# mora aqui nem no cofre: a SelectKey chega em cada pedido, no cabeçalho do cliente.
+#
+# Caminho do pedido: cliente → borda (TLS de mcp.selectwin.io) → porta PUBLICADA no ingress do swarm → :3000 no
+# container. A porta da origem só aceita a borda (firewall do provedor).
+#
+# Knobs (Dokploy › Environment):
+#   PUBLISHED_PORT  OBRIGATÓRIO. Porta de ingress que o upstream da borda chama — o valor está no Environment do
+#                   Dokploy, não aqui. Cluster-wide e ÚNICA no swarm. Porta nova também precisa de regra no firewall.
+#   IMAGE           Só para FIXAR outra versão ou voltar atrás (IMAGE=ghcr.io/selectwin/mcp:sha-<7>); tire a linha
+#                   depois, senão o stack fica preso naquele sha.
+#   RATE_LIMIT_PER_MIN  pedidos por minuto por IP (default 120).
+#
+# O MCP_HOSTED fica fixo aqui de propósito: é ele que deixa o servidor só-leitura (as 56 leituras de HOSTED_READS) e
+# ignora qualquer MCP_ENABLE_*_WRITES. Não vira knob.
+#
+# Render + valida local:  PUBLISHED_PORT=13000 docker stack config -c docker/stack/app.yml
+# Rollback:               IMAGE=ghcr.io/selectwin/mcp:sha-<7> no Environment + Deploy
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/selectwin/mcp:sha-1b8e0ab}
+    init: true
+    stop_grace_period: 15s
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      MCP_HOSTED: "true"
+      # Host e IP: a borda entrega o Host original e GRAVA (sobrescreve) o IP do visitante no X-Cabber-IP.
+      MCP_ALLOWED_HOSTS: mcp.selectwin.io
+      MCP_CLIENT_IP_HEADER: x-cabber-ip
+      MCP_RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-120}
+    ports:
+      - target: 3000
+        published: ${PUBLISHED_PORT:?defina uma porta de ingress LIVRE e ÚNICA no swarm em Dokploy › Environment}
+        protocol: tcp
+        mode: ingress
+    deploy:
+      # Uma réplica: o limite por IP é em memória.
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+      update_config:
+        parallelism: 1
+        order: start-first     # a task nova fica saudável (HEALTHCHECK /health da imagem) antes de a velha parar
+        failure_action: rollback
+        monitor: 30s
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 96M

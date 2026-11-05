@@ -1,6 +1,6 @@
 {
   "name": "@selectwin/mcp",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Selectwin MCP server — documentation + API tools over the Model Context Protocol.",
   "license": "MIT",
   "type": "module",
@@ -30,8 +30,8 @@
     "inspect": "npx @modelcontextprotocol/inspector"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.0",
-    "zod": "^3.23.8"
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

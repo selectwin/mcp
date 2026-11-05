@@ -39,6 +39,19 @@ describe('callApi', () => {
     await expect(callApi(base(), { operationId: 'getCustomer' })).rejects.toBeInstanceOf(ApiToolError);
   });
 
+  it('refuses a dot-segment path param, which would make the URL another operation than the one gated', async () => {
+    const { calls, fetchImpl } = capturing();
+    for (const value of ['..', '.']) {
+      await expect(
+        callApi(base({ fetchImpl }), { operationId: 'listProductVariants', pathParams: { productId: value } }),
+      ).rejects.toThrow(/Invalid path parameter 'productId'/);
+    }
+    expect(calls).toHaveLength(0);
+    // Anything else is encoded, never a path separator.
+    await callApi(base({ fetchImpl }), { operationId: 'getCustomer', pathParams: { customerId: '../cards' } });
+    expect(calls[0].url).toBe('https://api.selectwin.io/v1/customers/..%2Fcards');
+  });
+
   it('blocks writes unless enabled, then adds an idempotency key + JSON body', async () => {
     await expect(
       callApi(base(), { operationId: 'createCustomer', body: { firstName: 'A' } }),
@@ -87,6 +100,16 @@ describe('callApi', () => {
     const { calls, fetchImpl } = capturing(201, { id: 'adr_1' });
     await callApi(base({ enableWrites: true, fetchImpl }), { operationId: 'createAddress', body: { postcode: '01001000' } });
     expect(calls).toHaveLength(1);
+  });
+
+  it('hosted: refuses anything outside the curated reads before calling the API', async () => {
+    const { calls, fetchImpl } = capturing();
+    const hosted = base({ hosted: true, fetchImpl });
+    await expect(callApi(hosted, { operationId: 'listWallets' })).rejects.toThrow(/not available on the hosted/);
+    await expect(callApi(hosted, { operationId: 'createAddress', body: {} })).rejects.toThrow(/not available on the hosted/);
+    expect(calls).toHaveLength(0);
+    await callApi(hosted, { operationId: 'listTransactions', query: { limit: 5 } });
+    expect(calls[0].url).toBe('https://api.selectwin.io/v1/transactions?limit=5');
   });
 
   it('requires a SelectKey and a known operationId', async () => {

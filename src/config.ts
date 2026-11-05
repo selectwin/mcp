@@ -14,6 +14,11 @@ export interface ServerConfig {
    * allowlist in `spec.ts`. Off by default.
    */
   enableFinancialWrites: boolean;
+  /**
+   * The public multi-tenant deployment (mcp.selectwin.io): read-only, and `call_api` runs only `HOSTED_READS`.
+   * It overrides the write flags — no environment variable turns writes on for the hosted server.
+   */
+  hosted: boolean;
   userAgent: string;
   /** Injectable fetch (tests). Defaults to the global fetch. */
   fetchImpl?: typeof fetch;
@@ -31,13 +36,17 @@ export const MCP_VERSION: string =
 const strip = (u: string) => u.replace(/\/+$/, '');
 
 export function configFromEnv(overrides: Partial<ServerConfig> = {}): ServerConfig {
-  return {
+  const config: ServerConfig = {
     docsUrl: strip(process.env.SELECTWIN_DOCS_URL || 'https://selectwin.io'),
     apiUrl: strip(process.env.SELECTWIN_API_URL || 'https://api.selectwin.io'),
     selectKey: process.env.SELECTWIN_API_KEY || undefined,
     enableWrites: process.env.MCP_ENABLE_WRITES === 'true',
     enableFinancialWrites: process.env.MCP_ENABLE_FINANCIAL_WRITES === 'true',
+    hosted: process.env.MCP_HOSTED === 'true',
     userAgent: `selectwin-mcp/${MCP_VERSION}`,
     ...overrides,
   };
+  // The hosted server never writes, whatever the flags say.
+  if (config.hosted) return { ...config, enableWrites: false, enableFinancialWrites: false };
+  return config;
 }

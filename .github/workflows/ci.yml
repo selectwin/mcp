@@ -10,6 +10,10 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# A public repo runs this on pull requests from anyone: the token only reads.
+permissions:
+  contents: read
+
 jobs:
   test:
     name: test (Node ${{ matrix.node }})

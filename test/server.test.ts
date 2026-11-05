@@ -22,7 +22,7 @@ describe('MCP server', () => {
   it('registers the docs + api tools and the resources', async () => {
     const client = await connect(configFromEnv({ selectKey: 'sk_test_x' }));
     const tools = (await client.listTools()).tools.map((t) => t.name).sort();
-    expect(tools).toEqual(['call_api', 'get_llms_txt', 'get_openapi', 'list_api_reference', 'search_docs']);
+    expect(tools).toEqual(['call_api', 'get_llms_txt', 'get_operation', 'list_api_reference', 'search_docs']);
     const resources = (await client.listResources()).resources.map((r) => r.name).sort();
     expect(resources).toEqual(['llms', 'openapi']);
   });
@@ -48,6 +48,47 @@ describe('MCP server', () => {
     });
     expect(res.isError).toBe(true);
     expect(textOf(res)).toMatch(/writes are disabled/i);
+  });
+
+  it('get_operation returns one operation contract', async () => {
+    const client = await connect(configFromEnv({}));
+    const res = await client.callTool({ name: 'get_operation', arguments: { operationId: 'listTransactions' } });
+    expect(res.isError).toBeFalsy();
+    expect(JSON.parse(textOf(res)).path).toBe('/v1/transactions');
+    const missing = await client.callTool({ name: 'get_operation', arguments: { operationId: 'nope' } });
+    expect(missing.isError).toBe(true);
+  });
+
+  it('hosted: runs a curated read, refuses other reads and every write even with the write flags on', async () => {
+    const config = configFromEnv({
+      hosted: true,
+      enableWrites: true,
+      enableFinancialWrites: true,
+      selectKey: 'sk_test_x',
+      fetchImpl: mockFetch({ balance: 42 }),
+    });
+    expect(config.enableWrites).toBe(false);
+    expect(config.enableFinancialWrites).toBe(false);
+    const client = await connect(config);
+
+    const read = await client.callTool({ name: 'call_api', arguments: { operationId: 'getBalance' } });
+    expect(read.isError).toBeFalsy();
+    expect(textOf(read)).toContain('42');
+
+    for (const args of [
+      { operationId: 'listCards' },
+      { operationId: 'createCustomer', body: { firstName: 'Ana' } },
+      { operationId: 'createTransaction', body: { amount: 100 } },
+    ]) {
+      const res = await client.callTool({ name: 'call_api', arguments: args });
+      expect(res.isError, args.operationId).toBe(true);
+      expect(textOf(res)).toMatch(/not available on the hosted Selectwin MCP/);
+    }
+
+    const ref = await client.callTool({ name: 'list_api_reference', arguments: {} });
+    expect(textOf(ref)).toContain('getBalance [callable]');
+    const tools = (await client.listTools()).tools;
+    expect(tools.find((t) => t.name === 'call_api')?.annotations?.readOnlyHint).toBe(true);
   });
 
   it('search_docs is available without a SelectKey', async () => {

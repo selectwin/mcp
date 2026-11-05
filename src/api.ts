@@ -1,7 +1,10 @@
 /** API tool — a host-locked fetch client to api.selectwin.io, driven by the spec. */
 import { randomUUID } from 'node:crypto';
 import type { ServerConfig } from './config.js';
-import { findOperation, isMutation, isSensitiveWrite, type Operation } from './spec.js';
+import { HOSTED_READS, findOperation, isMutation, isSensitiveWrite, type Operation } from './spec.js';
+
+/** A Selectwin API call that takes longer than this is abandoned (the tool answers with the error). */
+const API_TIMEOUT_MS = 30_000;
 
 export interface CallApiInput {
   operationId: string;
@@ -27,6 +30,11 @@ function buildUrl(config: ServerConfig, op: Operation, input: CallApiInput): str
     if (value === undefined || value === null || value === '') {
       throw new ApiToolError(`Missing path parameter '${name}' for ${op.operationId}.`);
     }
+    // A dot segment survives encodeURIComponent and the URL parser resolves it: `productId: '..'` would turn
+    // /v1/products/{productId}/variants into /v1/variants — another operation than the one the gates judged.
+    if (value === '.' || value === '..') {
+      throw new ApiToolError(`Invalid path parameter '${name}' for ${op.operationId}.`);
+    }
     return encodeURIComponent(String(value));
   });
   const url = new URL(config.apiUrl + path);
@@ -49,6 +57,12 @@ export async function callApi(config: ServerConfig, input: CallApiInput): Promis
   if (!op) {
     throw new ApiToolError(`Unknown operationId '${input.operationId}'. Use list_api_reference to discover valid ids.`);
   }
+  if (config.hosted && !HOSTED_READS.has(op.operationId)) {
+    throw new ApiToolError(
+      `Operation '${op.operationId}' is not available on the hosted Selectwin MCP, which is read-only and runs only the ` +
+        'operations marked [callable] in list_api_reference. The full API runs from the local server (npx -y @selectwin/mcp).',
+    );
+  }
   if (isMutation(op.method) && !config.enableWrites) {
     throw new ApiToolError(
       `Operation '${op.operationId}' is a write (${op.method}) and writes are disabled. Set MCP_ENABLE_WRITES=true to allow.`,
@@ -61,7 +75,9 @@ export async function callApi(config: ServerConfig, input: CallApiInput): Promis
     );
   }
   if (!config.selectKey) {
-    throw new ApiToolError('Missing SelectKey. Set the `selectkey` header (HTTP) or SELECTWIN_API_KEY (stdio).');
+    throw new ApiToolError(
+      'Missing SelectKey. Send the `selectkey` header (or `Authorization: Bearer sk_…`) over HTTP, or set SELECTWIN_API_KEY (stdio).',
+    );
   }
 
   const url = buildUrl(config, op, input);
@@ -70,7 +86,7 @@ export async function callApi(config: ServerConfig, input: CallApiInput): Promis
     'User-Agent': config.userAgent,
     Accept: 'application/json',
   };
-  const init: RequestInit = { method: op.method, headers };
+  const init: RequestInit = { method: op.method, headers, signal: AbortSignal.timeout(API_TIMEOUT_MS) };
   if (isMutation(op.method)) {
     headers['X-Idempotency-Key'] = input.idempotencyKey ?? randomUUID();
     if (input.body !== undefined) {

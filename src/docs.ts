@@ -1,14 +1,19 @@
 /** Documentation tools — read-only, public; consume the docs site's public endpoints. */
 import type { ServerConfig } from './config.js';
 
-function http(config: ServerConfig): typeof fetch {
-  return config.fetchImpl ?? fetch;
+const DOCS_TIMEOUT_MS = 20_000;
+
+function get(config: ServerConfig, url: string): Promise<Response> {
+  return (config.fetchImpl ?? fetch)(url, {
+    headers: { 'User-Agent': config.userAgent },
+    signal: AbortSignal.timeout(DOCS_TIMEOUT_MS),
+  });
 }
 
-/** Full-text/semantic search over the docs + API reference (the site's search route). */
+/** Full-text/semantic search over the docs + API reference (the site's search route; it returns at most 30). */
 export async function searchDocs(config: ServerConfig, query: string, limit = 10): Promise<string> {
-  const url = `${config.docsUrl}/api/search?query=${encodeURIComponent(query)}`;
-  const res = await http(config)(url, { headers: { 'User-Agent': config.userAgent } });
+  const url = `${config.docsUrl}/api/search?query=${encodeURIComponent(query)}&limit=${Math.min(limit, 30)}`;
+  const res = await get(config, url);
   if (!res.ok) {
     return `Search failed (HTTP ${res.status}) for "${query}".`;
   }
@@ -25,12 +30,28 @@ export async function searchDocs(config: ServerConfig, query: string, limit = 10
   return `Documentation results for "${query}":\n\n${lines.join('\n')}`;
 }
 
-/** The docs corpus as text (llms.txt / llms-full.txt) — a stable public artifact. */
-export async function getLlmsTxt(config: ServerConfig, full = false): Promise<string> {
-  const url = `${config.docsUrl}/${full ? 'llms-full.txt' : 'llms.txt'}`;
-  const res = await http(config)(url, { headers: { 'User-Agent': config.userAgent } });
+/** A docs sector slug as the site names them in llms.txt (`/llms/<slug>.txt`), e.g. `pagamentos`, `webhooks`. */
+const SECTOR = /^[a-z0-9-]{1,64}$/;
+
+/**
+ * The docs corpus as text — a stable public artifact. By default the index (`llms.txt`, which lists the sectors);
+ * `sector` returns one sector (`/llms/<sector>.txt`); `full` the whole corpus (`llms-full.txt`, ~1 MB — for the
+ * resource, too big for a tool answer).
+ */
+export async function getLlmsTxt(config: ServerConfig, options: { full?: boolean; sector?: string } = {}): Promise<string> {
+  let file = 'llms.txt';
+  if (options.sector !== undefined) {
+    if (!SECTOR.test(options.sector)) return `Unknown docs sector '${options.sector}'. The sectors are listed in llms.txt.`;
+    file = `llms/${options.sector}.txt`;
+  } else if (options.full) {
+    file = 'llms-full.txt';
+  }
+  const url = `${config.docsUrl}/${file}`;
+  const res = await get(config, url);
   if (!res.ok) {
-    return `Could not fetch ${url} (HTTP ${res.status}).`;
+    return res.status === 404 && options.sector !== undefined
+      ? `Unknown docs sector '${options.sector}'. The sectors are listed in llms.txt.`
+      : `Could not fetch ${url} (HTTP ${res.status}).`;
   }
   return res.text();
 }

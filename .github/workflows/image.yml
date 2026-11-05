@@ -1,0 +1,73 @@
+name: Image (mcp.selectwin.io)
+
+# Builds the hosted server's image and deploys it, with no hand step:
+#   1. typecheck + tests;
+#   2. build and push ghcr.io/selectwin/mcp:sha-<7> (+ latest);
+#   3. pin docker/stack/app.yml to that sha in a `deploy(image): …` commit — the Dokploy stack (Auto Deploy on main)
+#      applies that commit, so the stack only ever moves to an image that exists.
+# The pin commit touches only docker/stack/, outside the paths below, so it does not loop.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'openapi.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'tsup.config.ts'
+      - 'Dockerfile'
+      - '.dockerignore'
+  workflow_dispatch:
+
+concurrency:
+  group: image
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # the pin commit
+  packages: write   # ghcr.io/selectwin/mcp
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        id: img
+        run: |
+          TAG="sha-${GITHUB_SHA::7}"
+          docker build -t "ghcr.io/selectwin/mcp:$TAG" -t ghcr.io/selectwin/mcp:latest .
+          docker push "ghcr.io/selectwin/mcp:$TAG"
+          docker push ghcr.io/selectwin/mcp:latest
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Pin the stack to this image
+        env:
+          TAG: ${{ steps.img.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          sed -i -E "s#ghcr.io/selectwin/mcp:sha-[0-9a-f]{7}#ghcr.io/selectwin/mcp:$TAG#" docker/stack/app.yml
+          if git diff --quiet; then
+            echo "::notice::docker/stack/app.yml already pins $TAG"
+            exit 0
+          fi
+          git commit -am "deploy(image): $TAG — o stack do mcp.selectwin.io passa a puxar esta imagem"
+          git push origin HEAD:main

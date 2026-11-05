@@ -1,0 +1,48 @@
+name: Spec sync
+
+# Keeps the vendored openapi.json equal to the one selectwin.io serves, every week, with no hand step. The tests run
+# against the new spec before the commit: if an operation of HOSTED_READS (or of the standard write allowlist) left the
+# API, the run fails and nothing is committed — a person decides. A commit pushed with GITHUB_TOKEN does not trigger
+# other workflows, so this one dispatches image.yml itself.
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'   # Mondays 06:00 BRT
+  workflow_dispatch:
+
+concurrency:
+  group: spec-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run sync:spec
+      - name: Changed?
+        id: diff
+        run: |
+          if git diff --quiet -- openapi.json; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Typecheck + tests against the new spec
+        if: steps.diff.outputs.changed == 'true'
+        run: npm run typecheck && npm test
+      - name: Commit and deploy
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(spec): openapi.json igual ao do selectwin.io" -- openapi.json
+          git push origin HEAD:main
+          gh workflow run image.yml --ref main
