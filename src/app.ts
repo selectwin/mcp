@@ -108,7 +108,10 @@ export function createMcpHttpServer(options: McpHttpOptions): Server {
   const http = createHttpServer(async (req, res) => {
     const started = Date.now();
     const url = new URL(req.url || '/', 'http://localhost');
-    if (url.pathname === '/health') {
+    // A trailing slash names the same resource: `/mcp/` is how the URL often gets pasted into a client config, and a
+    // 404 there reads as "server not found". Only trailing slashes go: `/mcpx` and `/mcp/x` are still not the endpoint.
+    const path = url.pathname.replace(/\/+$/, '') || '/';
+    if (path === '/health') {
       res.writeHead(200, { 'Content-Type': 'text/plain' }).end('ok');
       return;
     }
@@ -117,17 +120,17 @@ export function createMcpHttpServer(options: McpHttpOptions): Server {
       return;
     }
     // RFC 9728 Protected Resource Metadata: public, cacheable, readable from a browser-based client.
-    if (options.oauth && prmPaths.has(url.pathname) && (req.method === 'GET' || req.method === 'HEAD')) {
+    if (options.oauth && prmPaths.has(path) && (req.method === 'GET' || req.method === 'HEAD')) {
       json(res, 200, protectedResourceMetadata(options.oauth.resource), { 'Cache-Control': 'public, max-age=3600', 'Access-Control-Allow-Origin': '*' });
       return;
     }
-    if (url.pathname === '/' && req.method === 'GET') {
+    if (path === '/' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' }).end(
         `Selectwin MCP ${MCP_VERSION}\n\nStreamable HTTP endpoint: ${options.mcpPath}\nAuth: sign in (OAuth) from your MCP client, or the \`selectkey\` header with your SelectKey.\nDocs: https://selectwin.io/docs/sdk/mcp/overview\n`,
       );
       return;
     }
-    if (url.pathname !== options.mcpPath) {
+    if (path !== options.mcpPath) {
       res.writeHead(404, { 'Content-Type': 'text/plain' }).end('Not found');
       return;
     }

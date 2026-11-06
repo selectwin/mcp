@@ -109,13 +109,26 @@ describe('hosted MCP with OAuth', () => {
     expect((await fetch(`${base}/mcp`, { headers: { accept: 'text/event-stream' } })).status).toBe(405);
     expect((await fetch(`${base}/mcp`, { method: 'DELETE' })).status).toBe(405);
   });
+
+  it('a trailing slash is the same endpoint (and the same metadata); anything else past the path is still a 404', async () => {
+    const post = (path: string) =>
+      fetch(`${base}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) });
+    const res = await post('/mcp/');
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('"call_api"');
+    expect((await post('/mcp//')).status).toBe(200);
+    const prm = await fetch(`${base}/.well-known/oauth-protected-resource/mcp/`);
+    expect(prm.status).toBe(200);
+    expect(await prm.json()).toMatchObject({ resource: 'https://mcp.selectwin.io/mcp' });
+    for (const path of ['/mcpx', '/mcp/x', '/x/mcp']) expect((await post(path)).status, path).toBe(404);
+  });
 });
 
 describe('the 2026-07-28 protocol (SDK v2): a modern client on the same endpoint', () => {
-  async function modernClient(headers: Record<string, string> = {}) {
+  async function modernClient(headers: Record<string, string> = {}, path = '/mcp') {
     const { Client, StreamableHTTPClientTransport } = await import('@modelcontextprotocol/client');
     const client = new Client({ name: 'modern-test', version: '0.0.0' }, { versionNegotiation: { mode: { pin: '2026-07-28' } } });
-    const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`), { requestInit: { headers } });
+    const transport = new StreamableHTTPClientTransport(new URL(`${base}${path}`), { requestInit: { headers } });
     await client.connect(transport);
     return client;
   }
@@ -128,6 +141,13 @@ describe('the 2026-07-28 protocol (SDK v2): a modern client on the same endpoint
     expect(tools).toEqual(['call_api', 'get_llms_txt', 'get_operation', 'list_api_reference', 'search_docs']);
     const ref = await client.callTool({ name: 'list_api_reference', arguments: {} });
     expect((ref.content as Array<{ text: string }>)[0]!.text).toContain('getBalance [callable]');
+    await client.close();
+  });
+
+  it('a client configured with the trailing slash connects too', async () => {
+    const client = await modernClient({}, '/mcp/');
+    expect(client.getNegotiatedProtocolVersion()).toBe('2026-07-28');
+    expect((await client.listTools()).tools.map((t) => t.name)).toContain('call_api');
     await client.close();
   });
 
