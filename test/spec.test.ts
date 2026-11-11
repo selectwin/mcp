@@ -64,6 +64,74 @@ describe('spec', () => {
     }
   });
 
+  // The weekly spec-sync deploys whatever selectwin.io serves, with no review. Names alone would let a changed spec point
+  // a hosted read at another path (e.g. getCustomer at the payout wallets the owner left out) and still pass: the exact
+  // method + path of each of the 56 is pinned (security sweep 31). A real API change updates this map on purpose.
+  it('each hosted read still calls the exact method and path it was chosen for', () => {
+    const actual = Object.fromEntries([...HOSTED_READS].sort().map((id) => {
+      const op = findOperation(id)!;
+      return [id, `${op.method} ${op.path}`];
+    }));
+    expect(actual).toEqual({
+      getBalance: "GET /v1/balance",
+      getCheckoutPaymentLink: "GET /v1/checkouts/payment-links/{paymentLinkId}",
+      getCheckoutSession: "GET /v1/checkouts/sessions/{sessionId}",
+      getCheckoutSessionBehavior: "GET /v1/checkouts/sessions/{sessionId}/behavior",
+      getCoupon: "GET /v1/coupons/{couponId}",
+      getCustomer: "GET /v1/customers/{customerId}",
+      getMarketplacePlan: "GET /v1/marketplace/plans/{planId}",
+      getMarketplaceStatus: "GET /v1/marketplace",
+      getProduct: "GET /v1/products/{productId}",
+      getProductVariant: "GET /v1/products/{productId}/variants/{variantId}",
+      getPublicPricing: "GET /v1/public/pricing",
+      getReceivable: "GET /v1/receivables/{receivableId}",
+      getSubAccount: "GET /v1/marketplace/sub-accounts/{companyId}",
+      getSubAccountClosureRequest: "GET /v1/marketplace/sub-accounts/{companyId}/closure-request",
+      getSubAccountKycLink: "GET /v1/marketplace/sub-accounts/{companyId}/kyc-link",
+      getSubAccountOnboarding: "GET /v1/marketplace/sub-accounts/{companyId}/onboarding",
+      getSubscription: "GET /v1/subscriptions/{subscriptionId}",
+      getSubscriptionCycle: "GET /v1/subscriptions/{subscriptionId}/cycles/{cycleId}",
+      getSubscriptionCycleUsage: "GET /v1/subscriptions/{subscriptionId}/cycles/{cycleId}/usage",
+      getSubscriptionItem: "GET /v1/subscriptions/{subscriptionId}/items/{itemId}",
+      getSubscriptionSplit: "GET /v1/subscriptions/{subscriptionId}/splits/{splitId}",
+      getTransaction: "GET /v1/transactions/{transactionId}",
+      getVariant: "GET /v1/variants/{variantId}",
+      getWebhookEndpoint: "GET /v1/webhooks/{id}",
+      getWebhookEvent: "GET /v1/webhooks/events/{eventId}",
+      getWithdrawal: "GET /v1/withdrawals/{withdrawalId}",
+      getWithdrawalDestinations: "GET /v1/withdrawals/destinations",
+      listAllVariants: "GET /v1/variants",
+      listBalanceHistory: "GET /v1/balance/history",
+      listCheckoutPaymentLinks: "GET /v1/checkouts/payment-links",
+      listCheckoutSessions: "GET /v1/checkouts/sessions",
+      listCoupons: "GET /v1/coupons",
+      listCustomers: "GET /v1/customers",
+      listDebtSettlements: "GET /v1/balance/debt-settlements",
+      listMarketplacePlans: "GET /v1/marketplace/plans",
+      listProductVariants: "GET /v1/products/{productId}/variants",
+      listProducts: "GET /v1/products",
+      listReceivables: "GET /v1/receivables",
+      listSubAccounts: "GET /v1/marketplace/sub-accounts",
+      listSubscriptionCycles: "GET /v1/subscriptions/{subscriptionId}/cycles",
+      listSubscriptionItems: "GET /v1/subscriptions/{subscriptionId}/items",
+      listSubscriptionSplits: "GET /v1/subscriptions/{subscriptionId}/splits",
+      listSubscriptionThresholds: "GET /v1/subscriptions/{subscriptionId}/thresholds",
+      listSubscriptionUsage: "GET /v1/subscriptions/{subscriptionId}/usage",
+      listSubscriptions: "GET /v1/subscriptions",
+      listTransactions: "GET /v1/transactions",
+      listWebhookDispatches: "GET /v1/webhooks/dispatches",
+      listWebhookEndpoints: "GET /v1/webhooks",
+      listWebhookEvents: "GET /v1/webhooks/events",
+      listWithdrawals: "GET /v1/withdrawals",
+      receivablesSchedule: "GET /v1/receivables/schedule",
+      simulateInstallment: "GET /v1/simulators/installment",
+      simulateInstallments: "GET /v1/simulators/installments",
+      simulatePaymentMethods: "GET /v1/simulators/payment-methods",
+      utilsMetadata: "GET /v1/utils/metadata",
+      utilsTypesOfWebhooks: "GET /v1/utils/types-of-webhooks",
+    });
+  });
+
   it('the hosted summary marks exactly the callable operations', () => {
     const summary = apiReferenceSummary({ hosted: true });
     expect(summary.match(/ \[callable\] — /g)).toHaveLength(HOSTED_READS.size);
