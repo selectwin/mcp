@@ -17,7 +17,19 @@ import { Readable } from 'node:stream';
 import { createMcpHandler, type AuthInfo } from '@modelcontextprotocol/server';
 import { MCP_VERSION, configFromEnv } from './config.js';
 import { createServer } from './server.js';
-import { bearerOf, clientIp, createRateLimiter, hostAllowed, keyKind, needsAccount, originAllowed, readBody, selectKeyOf } from './guard.js';
+import {
+  bearerOf,
+  clientIp,
+  createInFlightLimiter,
+  createRateLimiter,
+  hostAllowed,
+  keyKind,
+  needsAccount,
+  originAllowed,
+  rateKey,
+  readBody,
+  selectKeyOf,
+} from './guard.js';
 import { bearerChallenge, protectedResourceMetadata, type OAuthResourceConfig, type TokenExchanger } from './oauth.js';
 
 const MAX_BODY_BYTES = 1_000_000;
@@ -28,6 +40,10 @@ export interface McpHttpOptions {
   allowedOrigins: string[];
   clientIpHeader?: string;
   rateLimitPerMinute: number;
+  /** Requests held at once by one client (its IPv4, or its IPv6 /64). Default 16. */
+  maxInFlightPerIp?: number;
+  /** Requests held at once in total — what bounds this process's memory. Default 64. */
+  maxInFlight?: number;
   /** OAuth on (hosted): this server's resource config and the RFC 8693 client. Absent ⇒ SelectKey only. */
   oauth?: { resource: OAuthResourceConfig; exchanger: TokenExchanger };
   /** Injectable fetch for the API/docs calls (tests). */
@@ -101,6 +117,7 @@ export function createMcpHttpServer(options: McpHttpOptions): Server {
     { maxRequestBodySize: MAX_BODY_BYTES },
   );
   const limiter = createRateLimiter(options.rateLimitPerMinute);
+  const inFlight = createInFlightLimiter(options.maxInFlightPerIp ?? 16, options.maxInFlight ?? 64);
   const sweeper = setInterval(() => limiter.sweep(), 60_000);
   sweeper.unref();
   const prmPaths = new Set(['/.well-known/oauth-protected-resource', `/.well-known/oauth-protected-resource${options.mcpPath}`]);
@@ -164,11 +181,19 @@ export function createMcpHttpServer(options: McpHttpOptions): Server {
       json(res, 405, rpcError(-32000, 'Method not allowed: this server is stateless, use POST'), { Allow: 'POST' });
       return;
     }
-    const quota = limiter.take(ip);
+    const bucket = rateKey(ip);
+    const quota = limiter.take(bucket);
     if (!quota.ok) {
       json(res, 429, rpcError(-32000, 'Too many requests'), { 'Retry-After': String(quota.retryAfterSec) });
       return;
     }
+    const slot = inFlight.acquire(bucket);
+    if (!slot.ok) {
+      if (slot.reason === 'per-key') json(res, 429, rpcError(-32000, 'Too many concurrent requests'), { 'Retry-After': '1' });
+      else json(res, 503, rpcError(-32000, 'Server busy. Try again in a moment.'), { 'Retry-After': '2' });
+      return;
+    }
+    res.on('close', slot.release);
 
     const read = await readBody(req, MAX_BODY_BYTES);
     if (!read.ok) {
@@ -184,6 +209,12 @@ export function createMcpHttpServer(options: McpHttpOptions): Server {
       return;
     }
     logged = describe(body);
+    // One message per request. JSON-RPC batches left the protocol in 2025-06-18; the SDK still ran up to 100 messages
+    // of one batch AT ONCE, so a single anonymous request multiplied every cost by 100 (security sweep 31, MCP-1).
+    if (Array.isArray(body)) {
+      json(res, 400, rpcError(-32600, 'Batches are not supported: send one JSON-RPC message per request'));
+      return;
+    }
 
     // OAuth: the client's token buys the session's API token; a refused token is a 401 like a missing one.
     let apiToken: string | undefined;

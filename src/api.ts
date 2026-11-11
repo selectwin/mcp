@@ -88,7 +88,9 @@ export async function callApi(config: ServerConfig, input: CallApiInput): Promis
   // An OAuth caller's API token (from the exchange) wins; otherwise the SelectKey.
   if (config.apiToken) headers.authorization = `Bearer ${config.apiToken}`;
   else headers.selectkey = config.selectKey!;
-  const init: RequestInit = { method: op.method, headers, signal: AbortSignal.timeout(API_TIMEOUT_MS) };
+  // `redirect: 'error'`: the API never redirects, and fetch would carry the `selectkey` header to wherever a redirect
+  // pointed (it strips only Authorization on a cross-origin hop) — the host lock above checks the FIRST URL only.
+  const init: RequestInit = { method: op.method, headers, redirect: 'error', signal: AbortSignal.timeout(API_TIMEOUT_MS) };
   if (isMutation(op.method)) {
     headers['X-Idempotency-Key'] = input.idempotencyKey ?? randomUUID();
     if (input.body !== undefined) {

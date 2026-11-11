@@ -6,7 +6,7 @@
  * canonical URI) and `SELECTWIN_OAUTH_ISSUER` (the authorization server). Without them, SelectKey only.
  */
 import { MCP_VERSION, configFromEnv } from './config.js';
-import { csv } from './guard.js';
+import { csv, positiveIntEnv } from './guard.js';
 import { createMcpHttpServer } from './app.js';
 import { createTokenExchanger, type OAuthResourceConfig } from './oauth.js';
 
@@ -27,7 +27,9 @@ const http = createMcpHttpServer({
   allowedHosts: csv(process.env.MCP_ALLOWED_HOSTS),
   allowedOrigins: csv(process.env.MCP_ALLOWED_ORIGINS),
   clientIpHeader: process.env.MCP_CLIENT_IP_HEADER || undefined,
-  rateLimitPerMinute: Number(process.env.MCP_RATE_LIMIT_PER_MIN || 120),
+  rateLimitPerMinute: positiveIntEnv('MCP_RATE_LIMIT_PER_MIN', process.env.MCP_RATE_LIMIT_PER_MIN, 120),
+  maxInFlightPerIp: positiveIntEnv('MCP_MAX_IN_FLIGHT_PER_IP', process.env.MCP_MAX_IN_FLIGHT_PER_IP, 16),
+  maxInFlight: positiveIntEnv('MCP_MAX_IN_FLIGHT', process.env.MCP_MAX_IN_FLIGHT, 64),
   oauth,
 });
 

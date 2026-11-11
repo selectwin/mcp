@@ -86,7 +86,9 @@ Clients that can only send a bearer token may use `Authorization: Bearer sk_…`
 - `get_operation(operationId)` — one operation's contract (parameters, body, responses with the schemas inlined).
 - `call_api({ operationId, pathParams?, query?, body?, idempotencyKey? })` — execute an API operation.
 
-**Resources** — `selectwin://openapi.json` (the whole document), `selectwin://llms.txt` (the whole docs corpus).
+**Resources** (local server only) — `selectwin://openapi.json` (the whole document), `selectwin://llms.txt` (the whole
+docs corpus). The hosted server does not serve these multi-megabyte documents: `get_operation` and `get_llms_txt`
+give the same content one operation or one sector at a time, which is also what fits a model's context.
 
 ## Configuration (env)
 
@@ -101,7 +103,9 @@ Clients that can only send a bearer token may use `Authorization: Bearer sk_…`
 | `MCP_ALLOWED_HOSTS` | — | HTTP: accepted `Host` values (comma list); empty accepts any |
 | `MCP_ALLOWED_ORIGINS` | — | HTTP: browser origins accepted; a request with any other `Origin` is refused |
 | `MCP_CLIENT_IP_HEADER` | — | HTTP: header the edge writes with the client IP (else the socket peer) |
-| `MCP_RATE_LIMIT_PER_MIN` | `120` | HTTP: requests per minute per client IP |
+| `MCP_RATE_LIMIT_PER_MIN` | `120` | HTTP: requests per minute per client (an IPv4 address, or an IPv6 /64) |
+| `MCP_MAX_IN_FLIGHT_PER_IP` | `16` | HTTP: requests one client may have open at once (more ⇒ 429) |
+| `MCP_MAX_IN_FLIGHT` | `64` | HTTP: requests open at once in total (more ⇒ 503). The three limits must be positive integers, or the server does not start |
 | `MCP_OAUTH_CLIENT_ID` / `MCP_OAUTH_CLIENT_SECRET` | — | HTTP: this server's client at the Selectwin authorization server, allowed to trade tokens (RFC 8693). Both set ⇒ OAuth on |
 | `MCP_RESOURCE_URL` | `https://mcp.selectwin.io/mcp` | HTTP: this server's canonical URI (RFC 8707) — the protected resource metadata `resource` |
 | `SELECTWIN_OAUTH_ISSUER` | `{SELECTWIN_API_URL}/v1/authentication/oauth` | HTTP: the authorization server |
@@ -124,7 +128,9 @@ Clients that can only send a bearer token may use `Authorization: Bearer sk_…`
 - **The client's token is never passed on.** A signed-in client's token is for this server only; it is traded at the
   authorization server for the same session's API token (RFC 8693), which never leaves this server.
 - **No key or token is ever logged.** The access log records only how the caller authenticated (`live`/`test`/`oauth`).
-- **HTTP guards:** `Host` and `Origin` checks, a per-IP rate limit, a 1 MB body cap, 30 s timeout on API calls.
+- **HTTP guards:** `Host` and `Origin` checks, a per-client rate limit and a cap on requests open at once (per client
+  and in total), one JSON-RPC message per request (no batches), a 1 MB body cap, 30 s timeout on API calls, and API
+  calls never follow a redirect.
 
 ## Architecture
 

@@ -149,19 +149,32 @@ export function createServer(config: ServerConfig): McpServer {
   );
 
   // --- Resources -----------------------------------------------------------
-  server.registerResource(
-    'openapi',
-    'selectwin://openapi.json',
-    { title: 'Selectwin OpenAPI', description: `The Selectwin OpenAPI v${spec.info?.version ?? '?'} document.`, mimeType: 'application/json' },
-    async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(spec) }] }),
-  );
+  // The whole OpenAPI document (~1.8 MB) and the whole docs corpus (~1 MB) are for the LOCAL server, where the reader's
+  // own machine pays for them. On the hosted, anonymous one, each read cost ~17 MB of memory in a 256 MB container — a
+  // handful at once took it down for everyone (security sweep 31, MCP-1); there `get_operation` and `get_llms_txt`
+  // serve the same content one operation / one sector at a time, which is also what fits a model's context.
+  if (!config.hosted) {
+    server.registerResource(
+      'openapi',
+      'selectwin://openapi.json',
+      { title: 'Selectwin OpenAPI', description: `The Selectwin OpenAPI v${spec.info?.version ?? '?'} document.`, mimeType: 'application/json' },
+      async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: specText() }] }),
+    );
 
-  server.registerResource(
-    'llms',
-    'selectwin://llms.txt',
-    { title: 'Selectwin docs (llms-full.txt)', description: 'The full Selectwin docs corpus as text.', mimeType: 'text/plain' },
-    async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/plain', text: await getLlmsTxt(config, { full: true }) }] }),
-  );
+    server.registerResource(
+      'llms',
+      'selectwin://llms.txt',
+      { title: 'Selectwin docs (llms-full.txt)', description: 'The full Selectwin docs corpus as text.', mimeType: 'text/plain' },
+      async (uri) => ({ contents: [{ uri: uri.href, mimeType: 'text/plain', text: await getLlmsTxt(config, { full: true }) }] }),
+    );
+  }
 
   return server;
+}
+
+/** The vendored document as text, serialized once (it never changes while the process lives). */
+let specTextCache: string | undefined;
+function specText(): string {
+  specTextCache ??= JSON.stringify(spec);
+  return specTextCache;
 }

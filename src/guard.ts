@@ -89,8 +89,70 @@ export function keyKind(key: string | undefined): 'live' | 'test' | 'other' | 'n
   return 'other';
 }
 
+/**
+ * The bucket a client IP counts against: the address itself for IPv4, its /64 for IPv6 — one IPv6 client holds a whole
+ * /64 and could otherwise wear a new address per request, past every per-IP limit (security sweep 31, MCP-3).
+ */
+export function rateKey(ip: string): string {
+  const addr = ip.replace(/%.*$/, '').toLowerCase();
+  if (!addr.includes(':')) return addr;
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(addr);
+  if (mapped) return mapped[1]!;
+  const [head = '', tail] = addr.split('::');
+  const left = head ? head.split(':') : [];
+  const right = tail ? tail.split(':') : [];
+  const groups = tail === undefined ? left : [...left, ...Array(Math.max(0, 8 - left.length - right.length)).fill('0'), ...right];
+  return `${groups.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, '')).join(':')}::/64`;
+}
+
+/**
+ * Requests in flight, per client and in total, held until the RESPONSE closes (not when the handler returns: a client
+ * that does not read keeps its response in this process's memory). The per-minute limit counts arrivals; this bounds
+ * what is held at once — a burst or a slow reader can no longer stack responses until the container runs out of
+ * memory (security sweep 31, MCP-1).
+ */
+export function createInFlightLimiter(perKey: number, total: number) {
+  const byKey = new Map<string, number>();
+  let all = 0;
+  return {
+    /** A release function (idempotent), or why the request may not start. */
+    acquire(key: string): { ok: true; release: () => void } | { ok: false; reason: 'per-key' | 'total' } {
+      if (all >= total) return { ok: false, reason: 'total' };
+      const mine = byKey.get(key) ?? 0;
+      if (mine >= perKey) return { ok: false, reason: 'per-key' };
+      byKey.set(key, mine + 1);
+      all += 1;
+      let released = false;
+      return {
+        ok: true,
+        release: () => {
+          if (released) return;
+          released = true;
+          all -= 1;
+          const left = (byKey.get(key) ?? 1) - 1;
+          if (left > 0) byKey.set(key, left);
+          else byKey.delete(key);
+        },
+      };
+    },
+    inFlight: (): number => all,
+  };
+}
+
+/**
+ * A positive integer from the environment, or the default when unset. Anything else stops the boot: `Number('abc')`
+ * is NaN, and `count > NaN` is never true — a typo in the knob used to turn the rate limit OFF in silence.
+ */
+export function positiveIntEnv(name: string, value: string | undefined, fallback: number): number {
+  if (value === undefined || value.trim() === '') return fallback;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1) throw new Error(`${name} must be a positive integer, got '${value}'`);
+  return n;
+}
+
 /** A fixed-window counter per key, in memory — the hosted server runs one replica. */
 export function createRateLimiter(limit: number, windowMs = 60_000, now: () => number = Date.now) {
+  if (!(Number.isFinite(limit) && limit >= 1)) throw new Error(`rate limit must be a positive number, got ${limit}`);
   const hits = new Map<string, { start: number; count: number }>();
   return {
     take(key: string): { ok: true } | { ok: false; retryAfterSec: number } {
