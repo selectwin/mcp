@@ -8,7 +8,7 @@ Two ways to use it:
 | | Hosted — `https://mcp.selectwin.io/mcp` | Local — `npx -y @selectwin/mcp` |
 |---|---|---|
 | Install | nothing | Node 20+ |
-| Account access | **read-only**: 56 curated reads (balance, sales, receivables, withdrawals, checkout, catalog, subscriptions, coupons, simulators, customers, webhooks, marketplace) | every read; writes behind flags (see Safety) |
+| Account access | **read-only**: 55 curated reads (balance, sales, receivables, withdrawals, checkout, catalog, subscriptions, coupons, simulators, customers, webhooks, marketplace) | every read; writes behind flags (see Safety) |
 | Auth | **sign in with your Selectwin account** (OAuth) — or your SelectKey in the `selectkey` header | `SELECTWIN_API_KEY` |
 
 Both speak every current MCP revision on the same endpoint: the 2025 ones (`initialize`) and **2026-07-28** (no
@@ -23,7 +23,7 @@ before you sign in; the assistant asks you to connect the first time it needs yo
 - **Claude Code:** `claude mcp add --transport http selectwin https://mcp.selectwin.io/mcp`, then `/mcp` → **Authenticate**.
 - **ChatGPT:** add a connector (developer mode) with the URL `https://mcp.selectwin.io/mcp`.
 
-What you allow is **read-only** (`mcp:read`): the same 56 reads as above, on the company and environment you are signed
+What you allow is **read-only** (`mcp:read`): the same 55 reads as above, on the company and environment you are signed
 into in the dashboard. It creates, changes and deletes nothing and moves no money. The connection shows up in
 **Account → Sessions**, and ending that session cuts it off.
 

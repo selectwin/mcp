@@ -13,7 +13,7 @@ import {
 describe('spec', () => {
   it('lists all operations', () => {
     // Not an exact count: the weekly spec-sync must pass when the API gains operations (new ones are default-deny).
-    expect(listOperations().length).toBeGreaterThanOrEqual(165);
+    expect(listOperations().length).toBeGreaterThanOrEqual(163);
   });
 
   it('finds an operation by id', () => {
@@ -51,8 +51,9 @@ describe('spec', () => {
     expect(summary).not.toContain('[callable]');
   });
 
-  it('the hosted reads are the 56 the owner chose, each one a GET that exists in the spec (a sync that drops one fails here)', () => {
-    expect(HOSTED_READS.size).toBe(56);
+  it('the hosted reads are the 55 the owner chose, each one a GET that exists in the spec (a sync that drops one fails here)', () => {
+    // 56 until 17/11/2026: `getWithdrawalDestinations` left the API with the rest of the third Pix provider (owner, 10/11).
+    expect(HOSTED_READS.size).toBe(55);
     for (const id of HOSTED_READS) {
       const op = findOperation(id);
       expect(op, id).toBeDefined();
@@ -66,7 +67,7 @@ describe('spec', () => {
 
   // The weekly spec-sync deploys whatever selectwin.io serves, with no review. Names alone would let a changed spec point
   // a hosted read at another path (e.g. getCustomer at the payout wallets the owner left out) and still pass: the exact
-  // method + path of each of the 56 is pinned (security sweep 31). A real API change updates this map on purpose.
+  // method + path of each of the 55 is pinned (security sweep 31). A real API change updates this map on purpose.
   it('each hosted read still calls the exact method and path it was chosen for', () => {
     const actual = Object.fromEntries([...HOSTED_READS].sort().map((id) => {
       const op = findOperation(id)!;
@@ -99,7 +100,6 @@ describe('spec', () => {
       getWebhookEndpoint: "GET /v1/webhooks/{id}",
       getWebhookEvent: "GET /v1/webhooks/events/{eventId}",
       getWithdrawal: "GET /v1/withdrawals/{withdrawalId}",
-      getWithdrawalDestinations: "GET /v1/withdrawals/destinations",
       listAllVariants: "GET /v1/variants",
       listBalanceHistory: "GET /v1/balance/history",
       listCheckoutPaymentLinks: "GET /v1/checkouts/payment-links",

@@ -58,7 +58,7 @@ export const HOSTED_READS: ReadonlySet<string> = new Set([
   // Receivables
   'listReceivables', 'getReceivable', 'receivablesSchedule',
   // Withdrawals (the destination comes masked)
-  'listWithdrawals', 'getWithdrawal', 'getWithdrawalDestinations',
+  'listWithdrawals', 'getWithdrawal',
   // Checkout and payment links (with the abandonment diagnosis)
   'listCheckoutPaymentLinks', 'getCheckoutPaymentLink', 'listCheckoutSessions', 'getCheckoutSession',
   'getCheckoutSessionBehavior',

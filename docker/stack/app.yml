@@ -17,7 +17,7 @@
 #                   da API (RFC 8693, `oauthClients.tokenExchange`, mig 362 do node-api). Com os dois, liga o OAuth (o
 #                   "Connect" do claude.ai/ChatGPT); sem eles, só SelectKey. O segredo mora SÓ aqui (Environment).
 #
-# O MCP_HOSTED fica fixo aqui de propósito: é ele que deixa o servidor só-leitura (as 56 leituras de HOSTED_READS) e
+# O MCP_HOSTED fica fixo aqui de propósito: é ele que deixa o servidor só-leitura (as 55 leituras de HOSTED_READS) e
 # ignora qualquer MCP_ENABLE_*_WRITES. Não vira knob.
 #
 # Render + valida local:  PUBLISHED_PORT=13000 docker stack config -c docker/stack/app.yml

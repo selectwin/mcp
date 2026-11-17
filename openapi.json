@@ -8557,6 +8557,7 @@
                           "name",
                           "endpoint",
                           "enabled",
+                          "createdByApp",
                           "disabledReason",
                           "disabledAt",
                           "disabledCanceledDispatches",
@@ -8676,15 +8677,37 @@
                             "type": "boolean",
                             "description": "Se todos os tipos de evento são entregues."
                           },
+                          "createdByApp": {
+                            "type": "object",
+                            "nullable": true,
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "O app (client_id)."
+                              },
+                              "name": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "O nome do app."
+                              }
+                            },
+                            "description": "O app conectado que criou este endpoint com o acesso dele; `null` quando foi você que criou.",
+                            "additionalProperties": false
+                          },
                           "disabledReason": {
                             "enum": [
                               "seller",
                               "circuitBreaker",
-                              "staff"
+                              "staff",
+                              "appRevoked"
                             ],
                             "type": "string",
                             "nullable": true,
-                            "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas) ou `staff`; `null` enquanto ativo."
+                            "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas), `staff`, ou `appRevoked` (você revogou o acesso do app que o criou); `null` enquanto ativo."
                           },
                           "failedShotsQty": {
                             "type": "integer",
@@ -8849,6 +8872,10 @@
                       "updatedAt": "string",
                       "disabledAt": "string",
                       "forceActive": true,
+                      "createdByApp": {
+                        "id": "string",
+                        "name": "Acme Ltda"
+                      },
                       "disabledReason": "seller",
                       "failedShotsQty": 0,
                       "lastDeliveryAt": "string",
@@ -9291,6 +9318,7 @@
                     "name",
                     "endpoint",
                     "enabled",
+                    "createdByApp",
                     "disabledReason",
                     "disabledAt",
                     "disabledCanceledDispatches",
@@ -9415,15 +9443,37 @@
                       "type": "boolean",
                       "description": "Se todos os tipos de evento são entregues."
                     },
+                    "createdByApp": {
+                      "type": "object",
+                      "nullable": true,
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "O app (client_id)."
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "O nome do app."
+                        }
+                      },
+                      "description": "O app conectado que criou este endpoint com o acesso dele; `null` quando foi você que criou.",
+                      "additionalProperties": false
+                    },
                     "disabledReason": {
                       "enum": [
                         "seller",
                         "circuitBreaker",
-                        "staff"
+                        "staff",
+                        "appRevoked"
                       ],
                       "type": "string",
                       "nullable": true,
-                      "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas) ou `staff`; `null` enquanto ativo."
+                      "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas), `staff`, ou `appRevoked` (você revogou o acesso do app que o criou); `null` enquanto ativo."
                     },
                     "failedShotsQty": {
                       "type": "integer",
@@ -9463,6 +9513,10 @@
                   "updatedAt": "string",
                   "disabledAt": "string",
                   "forceActive": true,
+                  "createdByApp": {
+                    "id": "string",
+                    "name": "Acme Ltda"
+                  },
                   "disabledReason": "seller",
                   "failedShotsQty": 0,
                   "lastDeliveryAt": "string",
@@ -14802,7 +14856,7 @@
                             "type": "string",
                             "pattern": "^(wall)_.+$",
                             "nullable": true,
-                            "description": "A conta bancária em que é pago; `null` quando pago na sua chave Pix."
+                            "description": "A conta bancária em que é pago."
                           },
                           "createdAt": {
                             "type": "string",
@@ -15581,7 +15635,7 @@
                       "type": "string",
                       "pattern": "^(wall)_.+$",
                       "nullable": true,
-                      "description": "A conta bancária em que é pago; `null` quando pago na sua chave Pix."
+                      "description": "A conta bancária em que é pago."
                     },
                     "createdAt": {
                       "type": "string",
@@ -16332,7 +16386,8 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "amount"
+                  "amount",
+                  "walletId"
                 ],
                 "properties": {
                   "amount": {
@@ -16343,7 +16398,7 @@
                   "walletId": {
                     "type": "string",
                     "pattern": "^(wall)_.+$",
-                    "description": "A conta bancária que o recebe. Omitida = a principal; a parte das vendas no Pix vai sempre para a chave Pix do seu próprio CPF/CNPJ."
+                    "description": "A conta bancária que o recebe."
                   }
                 },
                 "additionalProperties": false
@@ -17762,7 +17817,6 @@
                         "paidAt",
                         "allowRenewPayment",
                         "invoiceLink",
-                        "invoiceSharedLink",
                         "invoicePathLink"
                       ],
                       "properties": {
@@ -17804,7 +17858,6 @@
                                 "invalidParameters",
                                 "sellerAuthorizationRefused",
                                 "paymentMethodUnavailable",
-                                "pixAutomaticNotDebited",
                                 "cardValidationUnavailable",
                                 "paymentProcessingError"
                               ],
@@ -17877,7 +17930,7 @@
                         "invoiceLink": {
                           "type": "string",
                           "nullable": true,
-                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no domínio do checkout em que a venda foi feita — o seu domínio de checkout, ou `pay.selectwin.io`. `null` na resposta da criação — preenchido na leitura e nos webhooks."
+                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no seu domínio de checkout em que a venda foi feita (senão o seu domínio de checkout pronto). `null` quando a sua loja não tem domínio de checkout pronto, e na resposta da criação — preenchido na leitura e nos webhooks."
                         },
                         "installments": {
                           "type": "integer",
@@ -17931,7 +17984,7 @@
                         "invoicePathLink": {
                           "type": "string",
                           "nullable": true,
-                          "description": "O mesmo comprovante, como caminho (`/r/{env}/{token}`) para renderizar no seu próprio domínio. `null` exatamente quando `invoiceLink` é."
+                          "description": "O mesmo comprovante, como caminho (`/r/{env}/{token}`) para renderizar no seu próprio domínio. `null` só quando o comprovante não pode ser assinado, e na resposta da criação."
                         },
                         "nupayPaymentUrl": {
                           "type": "string",
@@ -17941,11 +17994,6 @@
                         "allowRenewPayment": {
                           "type": "boolean",
                           "description": "Se um novo Pix/boleto pode ser emitido para esta cobrança (`true` nesses meios)."
-                        },
-                        "invoiceSharedLink": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "O mesmo comprovante em `pay.selectwin.io` — continua abrindo se o seu domínio de checkout sair do ar. `null` exatamente quando `invoiceLink` é."
                         },
                         "billetDocumentNumber": {
                           "type": "string",
@@ -18815,7 +18863,6 @@
                         "invoicePathLink": null,
                         "nupayPaymentUrl": null,
                         "allowRenewPayment": true,
-                        "invoiceSharedLink": null,
                         "billetDocumentNumber": null,
                         "billetReferenceNumber": null,
                         "acquirerTransactionNumber": null
@@ -18952,7 +18999,6 @@
                         "invoicePathLink": null,
                         "nupayPaymentUrl": null,
                         "allowRenewPayment": true,
-                        "invoiceSharedLink": null,
                         "billetDocumentNumber": null,
                         "billetReferenceNumber": null,
                         "acquirerTransactionNumber": null
@@ -19089,7 +19135,6 @@
                         "invoicePathLink": null,
                         "nupayPaymentUrl": null,
                         "allowRenewPayment": false,
-                        "invoiceSharedLink": null,
                         "billetDocumentNumber": null,
                         "billetReferenceNumber": null,
                         "acquirerTransactionNumber": null
@@ -21475,71 +21520,6 @@
                             "description": "O ciclo de cobrança atual; `null` quando não há.",
                             "additionalProperties": false
                           },
-                          "pixAutomatic": {
-                            "type": "object",
-                            "nullable": true,
-                            "required": [
-                              "status",
-                              "journey",
-                              "qrCodeEmv",
-                              "qrCodeUrl",
-                              "valueCents",
-                              "firstChargeDate",
-                              "approvedAt",
-                              "endReason"
-                            ],
-                            "properties": {
-                              "status": {
-                                "enum": [
-                                  "pending",
-                                  "awaitingAuthorization",
-                                  "active",
-                                  "rejected",
-                                  "ended"
-                                ],
-                                "type": "string",
-                                "description": "`pending` (sendo criado) · `awaitingAuthorization` (QR code exibido) · `active` (debitado a cada ciclo) · `rejected` (o pagador recusou ou revogou) · `ended`. Depois de `rejected`/`ended` os ciclos são cobrados por um QR code cada."
-                              },
-                              "journey": {
-                                "enum": [
-                                  "paymentOnApproval",
-                                  "onlyRecurrency"
-                                ],
-                                "type": "string",
-                                "description": "`paymentOnApproval`: o primeiro ciclo é pago junto com a autorização; `onlyRecurrency`: só a recorrência é autorizada."
-                              },
-                              "endReason": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "Por que terminou; `null` enquanto ativo."
-                              },
-                              "qrCodeEmv": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "O QR code de autorização (copia e cola) — só enquanto `awaitingAuthorization`."
-                              },
-                              "qrCodeUrl": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "URL da imagem do QR code de autorização — só enquanto `awaitingAuthorization`."
-                              },
-                              "approvedAt": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "Quando o pagador autorizou; `null` até lá."
-                              },
-                              "valueCents": {
-                                "type": "integer",
-                                "description": "O valor fixo debitado a cada ciclo, em centavos."
-                              },
-                              "firstChargeDate": {
-                                "type": "string",
-                                "description": "Data do primeiro débito."
-                              }
-                            },
-                            "description": "Só na leitura individual; `null` quando a assinatura não é paga por Pix Automático.",
-                            "additionalProperties": false
-                          },
                           "renewalTerms": {
                             "type": "object",
                             "nullable": true,
@@ -21841,16 +21821,6 @@
                         "createdAt": "string",
                         "startDate": "string",
                         "updatedAt": "string"
-                      },
-                      "pixAutomatic": {
-                        "status": "pending",
-                        "journey": "paymentOnApproval",
-                        "endReason": "string",
-                        "qrCodeEmv": "string",
-                        "qrCodeUrl": "string",
-                        "approvedAt": "string",
-                        "valueCents": 5000,
-                        "firstChargeDate": "string"
                       },
                       "renewalTerms": {
                         "shipping": true,
@@ -23159,71 +23129,6 @@
                       "description": "O ciclo de cobrança atual; `null` quando não há.",
                       "additionalProperties": false
                     },
-                    "pixAutomatic": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "status",
-                        "journey",
-                        "qrCodeEmv",
-                        "qrCodeUrl",
-                        "valueCents",
-                        "firstChargeDate",
-                        "approvedAt",
-                        "endReason"
-                      ],
-                      "properties": {
-                        "status": {
-                          "enum": [
-                            "pending",
-                            "awaitingAuthorization",
-                            "active",
-                            "rejected",
-                            "ended"
-                          ],
-                          "type": "string",
-                          "description": "`pending` (sendo criado) · `awaitingAuthorization` (QR code exibido) · `active` (debitado a cada ciclo) · `rejected` (o pagador recusou ou revogou) · `ended`. Depois de `rejected`/`ended` os ciclos são cobrados por um QR code cada."
-                        },
-                        "journey": {
-                          "enum": [
-                            "paymentOnApproval",
-                            "onlyRecurrency"
-                          ],
-                          "type": "string",
-                          "description": "`paymentOnApproval`: o primeiro ciclo é pago junto com a autorização; `onlyRecurrency`: só a recorrência é autorizada."
-                        },
-                        "endReason": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Por que terminou; `null` enquanto ativo."
-                        },
-                        "qrCodeEmv": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "O QR code de autorização (copia e cola) — só enquanto `awaitingAuthorization`."
-                        },
-                        "qrCodeUrl": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "URL da imagem do QR code de autorização — só enquanto `awaitingAuthorization`."
-                        },
-                        "approvedAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Quando o pagador autorizou; `null` até lá."
-                        },
-                        "valueCents": {
-                          "type": "integer",
-                          "description": "O valor fixo debitado a cada ciclo, em centavos."
-                        },
-                        "firstChargeDate": {
-                          "type": "string",
-                          "description": "Data do primeiro débito."
-                        }
-                      },
-                      "description": "Só na leitura individual; `null` quando a assinatura não é paga por Pix Automático.",
-                      "additionalProperties": false
-                    },
                     "renewalTerms": {
                       "type": "object",
                       "nullable": true,
@@ -24238,10 +24143,6 @@
                       "pix": {
                         "type": "object",
                         "properties": {
-                          "automatic": {
-                            "type": "boolean",
-                            "description": "Pix Automático: o pagador autoriza uma vez (um QR code) e cada ciclo é debitado — sem QR por ciclo. Só valor fixo."
-                          },
                           "expiresInMinutes": {
                             "type": "integer",
                             "maximum": 525600,
@@ -24656,6 +24557,7 @@
                     "name",
                     "endpoint",
                     "enabled",
+                    "createdByApp",
                     "disabledReason",
                     "disabledAt",
                     "disabledCanceledDispatches",
@@ -24775,15 +24677,37 @@
                       "type": "boolean",
                       "description": "Se todos os tipos de evento são entregues."
                     },
+                    "createdByApp": {
+                      "type": "object",
+                      "nullable": true,
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "O app (client_id)."
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "O nome do app."
+                        }
+                      },
+                      "description": "O app conectado que criou este endpoint com o acesso dele; `null` quando foi você que criou.",
+                      "additionalProperties": false
+                    },
                     "disabledReason": {
                       "enum": [
                         "seller",
                         "circuitBreaker",
-                        "staff"
+                        "staff",
+                        "appRevoked"
                       ],
                       "type": "string",
                       "nullable": true,
-                      "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas) ou `staff`; `null` enquanto ativo."
+                      "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas), `staff`, ou `appRevoked` (você revogou o acesso do app que o criou); `null` enquanto ativo."
                     },
                     "failedShotsQty": {
                       "type": "integer",
@@ -24822,6 +24746,10 @@
                   "updatedAt": "string",
                   "disabledAt": "string",
                   "forceActive": true,
+                  "createdByApp": {
+                    "id": "string",
+                    "name": "Acme Ltda"
+                  },
                   "disabledReason": "seller",
                   "failedShotsQty": 0,
                   "lastDeliveryAt": "string",
@@ -25218,6 +25146,7 @@
                     "name",
                     "endpoint",
                     "enabled",
+                    "createdByApp",
                     "disabledReason",
                     "disabledAt",
                     "disabledCanceledDispatches",
@@ -25337,15 +25266,37 @@
                       "type": "boolean",
                       "description": "Se todos os tipos de evento são entregues."
                     },
+                    "createdByApp": {
+                      "type": "object",
+                      "nullable": true,
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "O app (client_id)."
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "O nome do app."
+                        }
+                      },
+                      "description": "O app conectado que criou este endpoint com o acesso dele; `null` quando foi você que criou.",
+                      "additionalProperties": false
+                    },
                     "disabledReason": {
                       "enum": [
                         "seller",
                         "circuitBreaker",
-                        "staff"
+                        "staff",
+                        "appRevoked"
                       ],
                       "type": "string",
                       "nullable": true,
-                      "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas) ou `staff`; `null` enquanto ativo."
+                      "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas), `staff`, ou `appRevoked` (você revogou o acesso do app que o criou); `null` enquanto ativo."
                     },
                     "failedShotsQty": {
                       "type": "integer",
@@ -25384,6 +25335,10 @@
                   "updatedAt": "string",
                   "disabledAt": "string",
                   "forceActive": true,
+                  "createdByApp": {
+                    "id": "string",
+                    "name": "Acme Ltda"
+                  },
                   "disabledReason": "seller",
                   "failedShotsQty": 0,
                   "lastDeliveryAt": "string",
@@ -29557,6 +29512,13 @@
                             "type": "string",
                             "nullable": true,
                             "description": "Id público desse recurso."
+                          },
+                          "dataWithheld": {
+                            "enum": [
+                              true
+                            ],
+                            "type": "boolean",
+                            "description": "Presente quando `data` vem `null` porque esta credencial não lê o recurso do evento."
                           }
                         },
                         "additionalProperties": false
@@ -29719,7 +29681,8 @@
                           "responseStatusCode": 0
                         }
                       ],
-                      "resourceId": "string"
+                      "resourceId": "string",
+                      "dataWithheld": true
                     }
                   ],
                   "page": {
@@ -50715,71 +50678,6 @@
                             "description": "O ciclo de cobrança atual; `null` quando não há.",
                             "additionalProperties": false
                           },
-                          "pixAutomatic": {
-                            "type": "object",
-                            "nullable": true,
-                            "required": [
-                              "status",
-                              "journey",
-                              "qrCodeEmv",
-                              "qrCodeUrl",
-                              "valueCents",
-                              "firstChargeDate",
-                              "approvedAt",
-                              "endReason"
-                            ],
-                            "properties": {
-                              "status": {
-                                "enum": [
-                                  "pending",
-                                  "awaitingAuthorization",
-                                  "active",
-                                  "rejected",
-                                  "ended"
-                                ],
-                                "type": "string",
-                                "description": "`pending` (sendo criado) · `awaitingAuthorization` (QR code exibido) · `active` (debitado a cada ciclo) · `rejected` (o pagador recusou ou revogou) · `ended`. Depois de `rejected`/`ended` os ciclos são cobrados por um QR code cada."
-                              },
-                              "journey": {
-                                "enum": [
-                                  "paymentOnApproval",
-                                  "onlyRecurrency"
-                                ],
-                                "type": "string",
-                                "description": "`paymentOnApproval`: o primeiro ciclo é pago junto com a autorização; `onlyRecurrency`: só a recorrência é autorizada."
-                              },
-                              "endReason": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "Por que terminou; `null` enquanto ativo."
-                              },
-                              "qrCodeEmv": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "O QR code de autorização (copia e cola) — só enquanto `awaitingAuthorization`."
-                              },
-                              "qrCodeUrl": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "URL da imagem do QR code de autorização — só enquanto `awaitingAuthorization`."
-                              },
-                              "approvedAt": {
-                                "type": "string",
-                                "nullable": true,
-                                "description": "Quando o pagador autorizou; `null` até lá."
-                              },
-                              "valueCents": {
-                                "type": "integer",
-                                "description": "O valor fixo debitado a cada ciclo, em centavos."
-                              },
-                              "firstChargeDate": {
-                                "type": "string",
-                                "description": "Data do primeiro débito."
-                              }
-                            },
-                            "description": "Só na leitura individual; `null` quando a assinatura não é paga por Pix Automático.",
-                            "additionalProperties": false
-                          },
                           "renewalTerms": {
                             "type": "object",
                             "nullable": true,
@@ -51081,16 +50979,6 @@
                         "createdAt": "string",
                         "startDate": "string",
                         "updatedAt": "string"
-                      },
-                      "pixAutomatic": {
-                        "status": "pending",
-                        "journey": "paymentOnApproval",
-                        "endReason": "string",
-                        "qrCodeEmv": "string",
-                        "qrCodeUrl": "string",
-                        "approvedAt": "string",
-                        "valueCents": 5000,
-                        "firstChargeDate": "string"
                       },
                       "renewalTerms": {
                         "shipping": true,
@@ -56076,7 +55964,7 @@
                   "domainId": {
                     "type": "string",
                     "pattern": "^(dmn|host|cdm)_.+$",
-                    "description": "O host em que a URL é montada: um dos seus domínios de checkout prontos, ou `dmn_shared` (o host da plataforma). Omitido = o seu domínio pronto mais antigo, senão o host da plataforma."
+                    "description": "O host em que a URL é montada: um dos seus domínios de checkout prontos. Omitido = o seu domínio de checkout pronto mais antigo; sem nenhum, o link é recusado (`checkoutDomainRequired`)."
                   },
                   "editable": {
                     "type": "boolean",
@@ -59766,384 +59654,6 @@
         "x-account-level": "always"
       }
     },
-    "/v1/withdrawals/destinations": {
-      "get": {
-        "tags": [
-          "Withdrawals"
-        ],
-        "summary": "Para onde os saques são pagos (o destino por chave Pix das vendas no Pix)",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "pixKey"
-                  ],
-                  "properties": {
-                    "pixKey": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "appliesTo",
-                        "keyType",
-                        "keyMasked",
-                        "holderName",
-                        "status",
-                        "canRecheck",
-                        "recheckAvailableInSeconds",
-                        "checkedAt"
-                      ],
-                      "properties": {
-                        "status": {
-                          "enum": [
-                            "active",
-                            "pending",
-                            "keyNotRegistered",
-                            "documentMissing",
-                            "blocked",
-                            "inactive"
-                          ],
-                          "type": "string",
-                          "description": "`active` (os saques fluem) · `pending` (em conferência) · `keyNotRegistered` (cadastre a chave do seu CPF/CNPJ no seu banco) · `documentMissing` · `blocked` · `inactive`."
-                        },
-                        "keyType": {
-                          "enum": [
-                            "cpf",
-                            "cnpj"
-                          ],
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Tipo da chave Pix: `cpf` ou `cnpj`."
-                        },
-                        "appliesTo": {
-                          "enum": [
-                            "pixSales"
-                          ],
-                          "type": "string",
-                          "description": "Sempre `pixSales`: este destino recebe a parte do saque que veio do Pix."
-                        },
-                        "checkedAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Quando a chave foi conferida pela última vez; `null` quando nunca."
-                        },
-                        "keyMasked": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "A chave Pix, mascarada."
-                        },
-                        "canRecheck": {
-                          "type": "boolean",
-                          "description": "Se `POST /v1/withdrawals/destinations/pix-key/recheck` pode ser chamado agora."
-                        },
-                        "holderName": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Nome do titular da chave."
-                        },
-                        "recheckAvailableInSeconds": {
-                          "type": "integer",
-                          "description": "Segundos até a próxima reconferência ser permitida (0 = agora)."
-                        }
-                      },
-                      "description": "`null` quando as suas vendas no Pix não ficam separadas (cada parte de um saque vai para a conta bancária escolhida).",
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "example": {
-                  "pixKey": {
-                    "status": "active",
-                    "keyType": "cpf",
-                    "appliesTo": "pixSales",
-                    "checkedAt": "string",
-                    "keyMasked": "string",
-                    "canRecheck": true,
-                    "holderName": "JOAO SILVA",
-                    "recheckAvailableInSeconds": 0
-                  }
-                }
-              }
-            },
-            "description": "Sucesso"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "error"
-                  ],
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": [
-                        "status",
-                        "statusCode",
-                        "category",
-                        "code",
-                        "message",
-                        "resource"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "params": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "category": {
-                          "enum": [
-                            "validation",
-                            "authentication",
-                            "authorization",
-                            "payment",
-                            "client",
-                            "server",
-                            "rate_limit",
-                            "pending"
-                          ],
-                          "type": "string"
-                        },
-                        "resource": {
-                          "type": "string"
-                        },
-                        "statusCode": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "description": "Envelope de erro padrão",
-                  "additionalProperties": false
-                },
-                "example": {
-                  "error": {
-                    "code": "unauthorized",
-                    "status": "Unauthorized",
-                    "message": "Authentication is required to access this resource.",
-                    "category": "authentication",
-                    "resource": "server",
-                    "statusCode": 401
-                  }
-                }
-              }
-            },
-            "description": "Não autenticado (credencial ausente ou inválida)"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "error"
-                  ],
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": [
-                        "status",
-                        "statusCode",
-                        "category",
-                        "code",
-                        "message",
-                        "resource"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "params": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "category": {
-                          "enum": [
-                            "validation",
-                            "authentication",
-                            "authorization",
-                            "payment",
-                            "client",
-                            "server",
-                            "rate_limit",
-                            "pending"
-                          ],
-                          "type": "string"
-                        },
-                        "resource": {
-                          "type": "string"
-                        },
-                        "statusCode": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "description": "Envelope de erro padrão",
-                  "additionalProperties": false
-                },
-                "example": {
-                  "error": {
-                    "code": "forbidden",
-                    "status": "Forbidden",
-                    "message": "You do not have permission to perform this action.",
-                    "category": "authorization",
-                    "resource": "server",
-                    "statusCode": 403
-                  }
-                }
-              }
-            },
-            "description": "Sem permissão"
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "error"
-                  ],
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": [
-                        "status",
-                        "statusCode",
-                        "category",
-                        "code",
-                        "message",
-                        "resource"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "params": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "category": {
-                          "enum": [
-                            "validation",
-                            "authentication",
-                            "authorization",
-                            "payment",
-                            "client",
-                            "server",
-                            "rate_limit",
-                            "pending"
-                          ],
-                          "type": "string"
-                        },
-                        "resource": {
-                          "type": "string"
-                        },
-                        "statusCode": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "description": "Envelope de erro padrão",
-                  "additionalProperties": false
-                },
-                "example": {
-                  "error": {
-                    "code": "serverError",
-                    "status": "Internal Server Error",
-                    "details": "If the problem persists, contact support with the correlationId from the response headers.",
-                    "message": "An unexpected error occurred. Please try again later.",
-                    "category": "server",
-                    "resource": "server",
-                    "statusCode": 500
-                  }
-                }
-              }
-            },
-            "description": "Erro interno do servidor"
-          }
-        },
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/SelectwinAccount"
-          }
-        ],
-        "operationId": "getWithdrawalDestinations"
-      }
-    },
     "/v1/utils/card-bin-validation": {
       "get": {
         "tags": [
@@ -61264,6 +60774,13 @@
                       "type": "string",
                       "nullable": true,
                       "description": "Id público desse recurso."
+                    },
+                    "dataWithheld": {
+                      "enum": [
+                        true
+                      ],
+                      "type": "boolean",
+                      "description": "Presente quando `data` vem `null` porque esta credencial não lê o recurso do evento."
                     }
                   },
                   "additionalProperties": false
@@ -61300,7 +60817,8 @@
                       "responseStatusCode": 0
                     }
                   ],
-                  "resourceId": "string"
+                  "resourceId": "string",
+                  "dataWithheld": true
                 }
               }
             },
@@ -65201,7 +64719,7 @@
                       "type": "string",
                       "pattern": "^(wall)_.+$",
                       "nullable": true,
-                      "description": "A conta bancária em que é pago; `null` quando pago na sua chave Pix."
+                      "description": "A conta bancária em que é pago."
                     },
                     "createdAt": {
                       "type": "string",
@@ -66249,6 +65767,7 @@
                     "name",
                     "endpoint",
                     "enabled",
+                    "createdByApp",
                     "disabledReason",
                     "disabledAt",
                     "disabledCanceledDispatches",
@@ -66373,15 +65892,37 @@
                       "type": "boolean",
                       "description": "Se todos os tipos de evento são entregues."
                     },
+                    "createdByApp": {
+                      "type": "object",
+                      "nullable": true,
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "O app (client_id)."
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "O nome do app."
+                        }
+                      },
+                      "description": "O app conectado que criou este endpoint com o acesso dele; `null` quando foi você que criou.",
+                      "additionalProperties": false
+                    },
                     "disabledReason": {
                       "enum": [
                         "seller",
                         "circuitBreaker",
-                        "staff"
+                        "staff",
+                        "appRevoked"
                       ],
                       "type": "string",
                       "nullable": true,
-                      "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas) ou `staff`; `null` enquanto ativo."
+                      "description": "Quem desativou: `seller` (você), `circuitBreaker` (a proteção automática, depois de falhas seguidas), `staff`, ou `appRevoked` (você revogou o acesso do app que o criou); `null` enquanto ativo."
                     },
                     "failedShotsQty": {
                       "type": "integer",
@@ -66421,6 +65962,10 @@
                   "updatedAt": "string",
                   "disabledAt": "string",
                   "forceActive": true,
+                  "createdByApp": {
+                    "id": "string",
+                    "name": "Acme Ltda"
+                  },
                   "disabledReason": "seller",
                   "failedShotsQty": 0,
                   "lastDeliveryAt": "string",
@@ -67293,7 +66838,6 @@
                         "paidAt",
                         "allowRenewPayment",
                         "invoiceLink",
-                        "invoiceSharedLink",
                         "invoicePathLink"
                       ],
                       "properties": {
@@ -67335,7 +66879,6 @@
                                 "invalidParameters",
                                 "sellerAuthorizationRefused",
                                 "paymentMethodUnavailable",
-                                "pixAutomaticNotDebited",
                                 "cardValidationUnavailable",
                                 "paymentProcessingError"
                               ],
@@ -67408,7 +66951,7 @@
                         "invoiceLink": {
                           "type": "string",
                           "nullable": true,
-                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no domínio do checkout em que a venda foi feita — o seu domínio de checkout, ou `pay.selectwin.io`. `null` na resposta da criação — preenchido na leitura e nos webhooks."
+                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no seu domínio de checkout em que a venda foi feita (senão o seu domínio de checkout pronto). `null` quando a sua loja não tem domínio de checkout pronto, e na resposta da criação — preenchido na leitura e nos webhooks."
                         },
                         "installments": {
                           "type": "integer",
@@ -67462,7 +67005,7 @@
                         "invoicePathLink": {
                           "type": "string",
                           "nullable": true,
-                          "description": "O mesmo comprovante, como caminho (`/r/{env}/{token}`) para renderizar no seu próprio domínio. `null` exatamente quando `invoiceLink` é."
+                          "description": "O mesmo comprovante, como caminho (`/r/{env}/{token}`) para renderizar no seu próprio domínio. `null` só quando o comprovante não pode ser assinado, e na resposta da criação."
                         },
                         "nupayPaymentUrl": {
                           "type": "string",
@@ -67472,11 +67015,6 @@
                         "allowRenewPayment": {
                           "type": "boolean",
                           "description": "Se um novo Pix/boleto pode ser emitido para esta cobrança (`true` nesses meios)."
-                        },
-                        "invoiceSharedLink": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "O mesmo comprovante em `pay.selectwin.io` — continua abrindo se o seu domínio de checkout sair do ar. `null` exatamente quando `invoiceLink` é."
                         },
                         "billetDocumentNumber": {
                           "type": "string",
@@ -68372,7 +67910,6 @@
                     "invoicePathLink": "string",
                     "nupayPaymentUrl": "string",
                     "allowRenewPayment": true,
-                    "invoiceSharedLink": "string",
                     "billetDocumentNumber": "string",
                     "billetReferenceNumber": "string",
                     "acquirerTransactionNumber": "string"
@@ -74300,71 +73837,6 @@
                       "description": "O ciclo de cobrança atual; `null` quando não há.",
                       "additionalProperties": false
                     },
-                    "pixAutomatic": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "status",
-                        "journey",
-                        "qrCodeEmv",
-                        "qrCodeUrl",
-                        "valueCents",
-                        "firstChargeDate",
-                        "approvedAt",
-                        "endReason"
-                      ],
-                      "properties": {
-                        "status": {
-                          "enum": [
-                            "pending",
-                            "awaitingAuthorization",
-                            "active",
-                            "rejected",
-                            "ended"
-                          ],
-                          "type": "string",
-                          "description": "`pending` (sendo criado) · `awaitingAuthorization` (QR code exibido) · `active` (debitado a cada ciclo) · `rejected` (o pagador recusou ou revogou) · `ended`. Depois de `rejected`/`ended` os ciclos são cobrados por um QR code cada."
-                        },
-                        "journey": {
-                          "enum": [
-                            "paymentOnApproval",
-                            "onlyRecurrency"
-                          ],
-                          "type": "string",
-                          "description": "`paymentOnApproval`: o primeiro ciclo é pago junto com a autorização; `onlyRecurrency`: só a recorrência é autorizada."
-                        },
-                        "endReason": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Por que terminou; `null` enquanto ativo."
-                        },
-                        "qrCodeEmv": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "O QR code de autorização (copia e cola) — só enquanto `awaitingAuthorization`."
-                        },
-                        "qrCodeUrl": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "URL da imagem do QR code de autorização — só enquanto `awaitingAuthorization`."
-                        },
-                        "approvedAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Quando o pagador autorizou; `null` até lá."
-                        },
-                        "valueCents": {
-                          "type": "integer",
-                          "description": "O valor fixo debitado a cada ciclo, em centavos."
-                        },
-                        "firstChargeDate": {
-                          "type": "string",
-                          "description": "Data do primeiro débito."
-                        }
-                      },
-                      "description": "Só na leitura individual; `null` quando a assinatura não é paga por Pix Automático.",
-                      "additionalProperties": false
-                    },
                     "renewalTerms": {
                       "type": "object",
                       "nullable": true,
@@ -74540,16 +74012,6 @@
                     "createdAt": "string",
                     "startDate": "string",
                     "updatedAt": "string"
-                  },
-                  "pixAutomatic": {
-                    "status": "pending",
-                    "journey": "paymentOnApproval",
-                    "endReason": "string",
-                    "qrCodeEmv": "string",
-                    "qrCodeUrl": "string",
-                    "approvedAt": "string",
-                    "valueCents": 5000,
-                    "firstChargeDate": "string"
                   },
                   "renewalTerms": {
                     "shipping": true,
@@ -77453,6 +76915,94 @@
               }
             },
             "description": "Não encontrado"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "status",
+                        "statusCode",
+                        "category",
+                        "code",
+                        "message",
+                        "resource"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "enum": [
+                            "validation",
+                            "authentication",
+                            "authorization",
+                            "payment",
+                            "client",
+                            "server",
+                            "rate_limit",
+                            "pending"
+                          ],
+                          "type": "string"
+                        },
+                        "resource": {
+                          "type": "string"
+                        },
+                        "statusCode": {
+                          "type": "integer"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "description": "Envelope de erro padrão",
+                  "additionalProperties": false
+                },
+                "example": {
+                  "error": {
+                    "code": "idempotencyInProgress",
+                    "status": "Conflict",
+                    "message": "A request with this idempotency key is already being processed.",
+                    "category": "client",
+                    "resource": "server",
+                    "statusCode": 409
+                  }
+                }
+              }
+            },
+            "description": "Conflito (idempotência ou estado)"
           },
           "422": {
             "content": {
@@ -81449,71 +80999,6 @@
                       "description": "O ciclo de cobrança atual; `null` quando não há.",
                       "additionalProperties": false
                     },
-                    "pixAutomatic": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "status",
-                        "journey",
-                        "qrCodeEmv",
-                        "qrCodeUrl",
-                        "valueCents",
-                        "firstChargeDate",
-                        "approvedAt",
-                        "endReason"
-                      ],
-                      "properties": {
-                        "status": {
-                          "enum": [
-                            "pending",
-                            "awaitingAuthorization",
-                            "active",
-                            "rejected",
-                            "ended"
-                          ],
-                          "type": "string",
-                          "description": "`pending` (sendo criado) · `awaitingAuthorization` (QR code exibido) · `active` (debitado a cada ciclo) · `rejected` (o pagador recusou ou revogou) · `ended`. Depois de `rejected`/`ended` os ciclos são cobrados por um QR code cada."
-                        },
-                        "journey": {
-                          "enum": [
-                            "paymentOnApproval",
-                            "onlyRecurrency"
-                          ],
-                          "type": "string",
-                          "description": "`paymentOnApproval`: o primeiro ciclo é pago junto com a autorização; `onlyRecurrency`: só a recorrência é autorizada."
-                        },
-                        "endReason": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Por que terminou; `null` enquanto ativo."
-                        },
-                        "qrCodeEmv": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "O QR code de autorização (copia e cola) — só enquanto `awaitingAuthorization`."
-                        },
-                        "qrCodeUrl": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "URL da imagem do QR code de autorização — só enquanto `awaitingAuthorization`."
-                        },
-                        "approvedAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Quando o pagador autorizou; `null` até lá."
-                        },
-                        "valueCents": {
-                          "type": "integer",
-                          "description": "O valor fixo debitado a cada ciclo, em centavos."
-                        },
-                        "firstChargeDate": {
-                          "type": "string",
-                          "description": "Data do primeiro débito."
-                        }
-                      },
-                      "description": "Só na leitura individual; `null` quando a assinatura não é paga por Pix Automático.",
-                      "additionalProperties": false
-                    },
                     "renewalTerms": {
                       "type": "object",
                       "nullable": true,
@@ -81689,16 +81174,6 @@
                     "createdAt": "string",
                     "startDate": "string",
                     "updatedAt": "string"
-                  },
-                  "pixAutomatic": {
-                    "status": "pending",
-                    "journey": "paymentOnApproval",
-                    "endReason": "string",
-                    "qrCodeEmv": "string",
-                    "qrCodeUrl": "string",
-                    "approvedAt": "string",
-                    "valueCents": 5000,
-                    "firstChargeDate": "string"
                   },
                   "renewalTerms": {
                     "shipping": true,
@@ -83182,6 +82657,94 @@
             },
             "description": "Não encontrado"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "status",
+                        "statusCode",
+                        "category",
+                        "code",
+                        "message",
+                        "resource"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "enum": [
+                            "validation",
+                            "authentication",
+                            "authorization",
+                            "payment",
+                            "client",
+                            "server",
+                            "rate_limit",
+                            "pending"
+                          ],
+                          "type": "string"
+                        },
+                        "resource": {
+                          "type": "string"
+                        },
+                        "statusCode": {
+                          "type": "integer"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "description": "Envelope de erro padrão",
+                  "additionalProperties": false
+                },
+                "example": {
+                  "error": {
+                    "code": "idempotencyInProgress",
+                    "status": "Conflict",
+                    "message": "A request with this idempotency key is already being processed.",
+                    "category": "client",
+                    "resource": "server",
+                    "statusCode": 409
+                  }
+                }
+              }
+            },
+            "description": "Conflito (idempotência ou estado)"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -83890,7 +83453,6 @@
                         "paidAt",
                         "allowRenewPayment",
                         "invoiceLink",
-                        "invoiceSharedLink",
                         "invoicePathLink"
                       ],
                       "properties": {
@@ -83932,7 +83494,6 @@
                                 "invalidParameters",
                                 "sellerAuthorizationRefused",
                                 "paymentMethodUnavailable",
-                                "pixAutomaticNotDebited",
                                 "cardValidationUnavailable",
                                 "paymentProcessingError"
                               ],
@@ -84005,7 +83566,7 @@
                         "invoiceLink": {
                           "type": "string",
                           "nullable": true,
-                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no domínio do checkout em que a venda foi feita — o seu domínio de checkout, ou `pay.selectwin.io`. `null` na resposta da criação — preenchido na leitura e nos webhooks."
+                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no seu domínio de checkout em que a venda foi feita (senão o seu domínio de checkout pronto). `null` quando a sua loja não tem domínio de checkout pronto, e na resposta da criação — preenchido na leitura e nos webhooks."
                         },
                         "installments": {
                           "type": "integer",
@@ -84059,7 +83620,7 @@
                         "invoicePathLink": {
                           "type": "string",
                           "nullable": true,
-                          "description": "O mesmo comprovante, como caminho (`/r/{env}/{token}`) para renderizar no seu próprio domínio. `null` exatamente quando `invoiceLink` é."
+                          "description": "O mesmo comprovante, como caminho (`/r/{env}/{token}`) para renderizar no seu próprio domínio. `null` só quando o comprovante não pode ser assinado, e na resposta da criação."
                         },
                         "nupayPaymentUrl": {
                           "type": "string",
@@ -84069,11 +83630,6 @@
                         "allowRenewPayment": {
                           "type": "boolean",
                           "description": "Se um novo Pix/boleto pode ser emitido para esta cobrança (`true` nesses meios)."
-                        },
-                        "invoiceSharedLink": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "O mesmo comprovante em `pay.selectwin.io` — continua abrindo se o seu domínio de checkout sair do ar. `null` exatamente quando `invoiceLink` é."
                         },
                         "billetDocumentNumber": {
                           "type": "string",
@@ -84969,7 +84525,6 @@
                     "invoicePathLink": "string",
                     "nupayPaymentUrl": "string",
                     "allowRenewPayment": true,
-                    "invoiceSharedLink": "string",
                     "billetDocumentNumber": "string",
                     "billetReferenceNumber": "string",
                     "acquirerTransactionNumber": "string"
@@ -87032,71 +86587,6 @@
                       "description": "O ciclo de cobrança atual; `null` quando não há.",
                       "additionalProperties": false
                     },
-                    "pixAutomatic": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "status",
-                        "journey",
-                        "qrCodeEmv",
-                        "qrCodeUrl",
-                        "valueCents",
-                        "firstChargeDate",
-                        "approvedAt",
-                        "endReason"
-                      ],
-                      "properties": {
-                        "status": {
-                          "enum": [
-                            "pending",
-                            "awaitingAuthorization",
-                            "active",
-                            "rejected",
-                            "ended"
-                          ],
-                          "type": "string",
-                          "description": "`pending` (sendo criado) · `awaitingAuthorization` (QR code exibido) · `active` (debitado a cada ciclo) · `rejected` (o pagador recusou ou revogou) · `ended`. Depois de `rejected`/`ended` os ciclos são cobrados por um QR code cada."
-                        },
-                        "journey": {
-                          "enum": [
-                            "paymentOnApproval",
-                            "onlyRecurrency"
-                          ],
-                          "type": "string",
-                          "description": "`paymentOnApproval`: o primeiro ciclo é pago junto com a autorização; `onlyRecurrency`: só a recorrência é autorizada."
-                        },
-                        "endReason": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Por que terminou; `null` enquanto ativo."
-                        },
-                        "qrCodeEmv": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "O QR code de autorização (copia e cola) — só enquanto `awaitingAuthorization`."
-                        },
-                        "qrCodeUrl": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "URL da imagem do QR code de autorização — só enquanto `awaitingAuthorization`."
-                        },
-                        "approvedAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Quando o pagador autorizou; `null` até lá."
-                        },
-                        "valueCents": {
-                          "type": "integer",
-                          "description": "O valor fixo debitado a cada ciclo, em centavos."
-                        },
-                        "firstChargeDate": {
-                          "type": "string",
-                          "description": "Data do primeiro débito."
-                        }
-                      },
-                      "description": "Só na leitura individual; `null` quando a assinatura não é paga por Pix Automático.",
-                      "additionalProperties": false
-                    },
                     "renewalTerms": {
                       "type": "object",
                       "nullable": true,
@@ -87272,16 +86762,6 @@
                     "createdAt": "string",
                     "startDate": "string",
                     "updatedAt": "string"
-                  },
-                  "pixAutomatic": {
-                    "status": "pending",
-                    "journey": "paymentOnApproval",
-                    "endReason": "string",
-                    "qrCodeEmv": "string",
-                    "qrCodeUrl": "string",
-                    "approvedAt": "string",
-                    "valueCents": 5000,
-                    "firstChargeDate": "string"
                   },
                   "renewalTerms": {
                     "shipping": true,
@@ -90090,71 +89570,6 @@
                       "description": "O ciclo de cobrança atual; `null` quando não há.",
                       "additionalProperties": false
                     },
-                    "pixAutomatic": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "status",
-                        "journey",
-                        "qrCodeEmv",
-                        "qrCodeUrl",
-                        "valueCents",
-                        "firstChargeDate",
-                        "approvedAt",
-                        "endReason"
-                      ],
-                      "properties": {
-                        "status": {
-                          "enum": [
-                            "pending",
-                            "awaitingAuthorization",
-                            "active",
-                            "rejected",
-                            "ended"
-                          ],
-                          "type": "string",
-                          "description": "`pending` (sendo criado) · `awaitingAuthorization` (QR code exibido) · `active` (debitado a cada ciclo) · `rejected` (o pagador recusou ou revogou) · `ended`. Depois de `rejected`/`ended` os ciclos são cobrados por um QR code cada."
-                        },
-                        "journey": {
-                          "enum": [
-                            "paymentOnApproval",
-                            "onlyRecurrency"
-                          ],
-                          "type": "string",
-                          "description": "`paymentOnApproval`: o primeiro ciclo é pago junto com a autorização; `onlyRecurrency`: só a recorrência é autorizada."
-                        },
-                        "endReason": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Por que terminou; `null` enquanto ativo."
-                        },
-                        "qrCodeEmv": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "O QR code de autorização (copia e cola) — só enquanto `awaitingAuthorization`."
-                        },
-                        "qrCodeUrl": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "URL da imagem do QR code de autorização — só enquanto `awaitingAuthorization`."
-                        },
-                        "approvedAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Quando o pagador autorizou; `null` até lá."
-                        },
-                        "valueCents": {
-                          "type": "integer",
-                          "description": "O valor fixo debitado a cada ciclo, em centavos."
-                        },
-                        "firstChargeDate": {
-                          "type": "string",
-                          "description": "Data do primeiro débito."
-                        }
-                      },
-                      "description": "Só na leitura individual; `null` quando a assinatura não é paga por Pix Automático.",
-                      "additionalProperties": false
-                    },
                     "renewalTerms": {
                       "type": "object",
                       "nullable": true,
@@ -90330,16 +89745,6 @@
                     "createdAt": "string",
                     "startDate": "string",
                     "updatedAt": "string"
-                  },
-                  "pixAutomatic": {
-                    "status": "pending",
-                    "journey": "paymentOnApproval",
-                    "endReason": "string",
-                    "qrCodeEmv": "string",
-                    "qrCodeUrl": "string",
-                    "approvedAt": "string",
-                    "valueCents": 5000,
-                    "firstChargeDate": "string"
                   },
                   "renewalTerms": {
                     "shipping": true,
@@ -96358,648 +95763,6 @@
           }
         ],
         "operationId": "getCheckoutSessionBehavior"
-      }
-    },
-    "/v1/withdrawals/destinations/pix-key/recheck": {
-      "post": {
-        "tags": [
-          "Withdrawals"
-        ],
-        "summary": "Reconfere o destino de saque por chave Pix depois de cadastrar a chave no banco",
-        "responses": {
-          "202": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "pixKey"
-                  ],
-                  "properties": {
-                    "pixKey": {
-                      "type": "object",
-                      "nullable": true,
-                      "required": [
-                        "appliesTo",
-                        "keyType",
-                        "keyMasked",
-                        "holderName",
-                        "status",
-                        "canRecheck",
-                        "recheckAvailableInSeconds",
-                        "checkedAt"
-                      ],
-                      "properties": {
-                        "status": {
-                          "enum": [
-                            "active",
-                            "pending",
-                            "keyNotRegistered",
-                            "documentMissing",
-                            "blocked",
-                            "inactive"
-                          ],
-                          "type": "string",
-                          "description": "`active` (os saques fluem) · `pending` (em conferência) · `keyNotRegistered` (cadastre a chave do seu CPF/CNPJ no seu banco) · `documentMissing` · `blocked` · `inactive`."
-                        },
-                        "keyType": {
-                          "enum": [
-                            "cpf",
-                            "cnpj"
-                          ],
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Tipo da chave Pix: `cpf` ou `cnpj`."
-                        },
-                        "appliesTo": {
-                          "enum": [
-                            "pixSales"
-                          ],
-                          "type": "string",
-                          "description": "Sempre `pixSales`: este destino recebe a parte do saque que veio do Pix."
-                        },
-                        "checkedAt": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Quando a chave foi conferida pela última vez; `null` quando nunca."
-                        },
-                        "keyMasked": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "A chave Pix, mascarada."
-                        },
-                        "canRecheck": {
-                          "type": "boolean",
-                          "description": "Se `POST /v1/withdrawals/destinations/pix-key/recheck` pode ser chamado agora."
-                        },
-                        "holderName": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Nome do titular da chave."
-                        },
-                        "recheckAvailableInSeconds": {
-                          "type": "integer",
-                          "description": "Segundos até a próxima reconferência ser permitida (0 = agora)."
-                        }
-                      },
-                      "description": "`null` quando as suas vendas no Pix não ficam separadas (cada parte de um saque vai para a conta bancária escolhida).",
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                },
-                "example": {
-                  "pixKey": {
-                    "status": "active",
-                    "keyType": "cpf",
-                    "appliesTo": "pixSales",
-                    "checkedAt": "string",
-                    "keyMasked": "string",
-                    "canRecheck": true,
-                    "holderName": "JOAO SILVA",
-                    "recheckAvailableInSeconds": 0
-                  }
-                }
-              }
-            },
-            "description": "Aceito"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "error"
-                  ],
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": [
-                        "status",
-                        "statusCode",
-                        "category",
-                        "code",
-                        "message",
-                        "resource"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "params": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "category": {
-                          "enum": [
-                            "validation",
-                            "authentication",
-                            "authorization",
-                            "payment",
-                            "client",
-                            "server",
-                            "rate_limit",
-                            "pending"
-                          ],
-                          "type": "string"
-                        },
-                        "resource": {
-                          "type": "string"
-                        },
-                        "statusCode": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "description": "Envelope de erro padrão",
-                  "additionalProperties": false
-                },
-                "example": {
-                  "error": {
-                    "code": "unauthorized",
-                    "status": "Unauthorized",
-                    "message": "Authentication is required to access this resource.",
-                    "category": "authentication",
-                    "resource": "server",
-                    "statusCode": 401
-                  }
-                }
-              }
-            },
-            "description": "Não autenticado (credencial ausente ou inválida)"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "error"
-                  ],
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": [
-                        "status",
-                        "statusCode",
-                        "category",
-                        "code",
-                        "message",
-                        "resource"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "params": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "category": {
-                          "enum": [
-                            "validation",
-                            "authentication",
-                            "authorization",
-                            "payment",
-                            "client",
-                            "server",
-                            "rate_limit",
-                            "pending"
-                          ],
-                          "type": "string"
-                        },
-                        "resource": {
-                          "type": "string"
-                        },
-                        "statusCode": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "description": "Envelope de erro padrão",
-                  "additionalProperties": false
-                },
-                "example": {
-                  "error": {
-                    "code": "forbidden",
-                    "status": "Forbidden",
-                    "message": "You do not have permission to perform this action.",
-                    "category": "authorization",
-                    "resource": "server",
-                    "statusCode": 403
-                  }
-                }
-              }
-            },
-            "description": "Sem permissão"
-          },
-          "409": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "error"
-                  ],
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": [
-                        "status",
-                        "statusCode",
-                        "category",
-                        "code",
-                        "message",
-                        "resource"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "params": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "category": {
-                          "enum": [
-                            "validation",
-                            "authentication",
-                            "authorization",
-                            "payment",
-                            "client",
-                            "server",
-                            "rate_limit",
-                            "pending"
-                          ],
-                          "type": "string"
-                        },
-                        "resource": {
-                          "type": "string"
-                        },
-                        "statusCode": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "description": "Envelope de erro padrão",
-                  "additionalProperties": false
-                },
-                "example": {
-                  "error": {
-                    "code": "idempotencyInProgress",
-                    "status": "Conflict",
-                    "message": "A request with this idempotency key is already being processed.",
-                    "category": "client",
-                    "resource": "server",
-                    "statusCode": 409
-                  }
-                }
-              }
-            },
-            "description": "Conflito (idempotência ou estado)"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "error"
-                  ],
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": [
-                        "status",
-                        "statusCode",
-                        "category",
-                        "code",
-                        "message",
-                        "resource"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "params": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "category": {
-                          "enum": [
-                            "validation",
-                            "authentication",
-                            "authorization",
-                            "payment",
-                            "client",
-                            "server",
-                            "rate_limit",
-                            "pending"
-                          ],
-                          "type": "string"
-                        },
-                        "resource": {
-                          "type": "string"
-                        },
-                        "statusCode": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "description": "Envelope de erro padrão",
-                  "additionalProperties": false
-                },
-                "example": {
-                  "error": {
-                    "code": "invalidParameters",
-                    "status": "Bad Request",
-                    "message": "Validation errors occurred.",
-                    "category": "validation",
-                    "resource": "server",
-                    "statusCode": 400
-                  }
-                }
-              }
-            },
-            "description": "Regra de negócio impede o processamento"
-          },
-          "429": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "error"
-                  ],
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": [
-                        "status",
-                        "statusCode",
-                        "category",
-                        "code",
-                        "message",
-                        "resource"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "params": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "category": {
-                          "enum": [
-                            "validation",
-                            "authentication",
-                            "authorization",
-                            "payment",
-                            "client",
-                            "server",
-                            "rate_limit",
-                            "pending"
-                          ],
-                          "type": "string"
-                        },
-                        "resource": {
-                          "type": "string"
-                        },
-                        "statusCode": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "description": "Envelope de erro padrão",
-                  "additionalProperties": false
-                },
-                "example": {
-                  "error": {
-                    "code": "invalidParameters",
-                    "status": "Bad Request",
-                    "message": "Validation errors occurred.",
-                    "category": "validation",
-                    "resource": "server",
-                    "statusCode": 400
-                  }
-                }
-              }
-            },
-            "description": "Limite de requisições excedido"
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "error"
-                  ],
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "required": [
-                        "status",
-                        "statusCode",
-                        "category",
-                        "code",
-                        "message",
-                        "resource"
-                      ],
-                      "properties": {
-                        "code": {
-                          "type": "string"
-                        },
-                        "params": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                }
-                              ]
-                            }
-                          }
-                        },
-                        "status": {
-                          "type": "string"
-                        },
-                        "details": {
-                          "type": "string"
-                        },
-                        "message": {
-                          "type": "string"
-                        },
-                        "category": {
-                          "enum": [
-                            "validation",
-                            "authentication",
-                            "authorization",
-                            "payment",
-                            "client",
-                            "server",
-                            "rate_limit",
-                            "pending"
-                          ],
-                          "type": "string"
-                        },
-                        "resource": {
-                          "type": "string"
-                        },
-                        "statusCode": {
-                          "type": "integer"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "description": "Envelope de erro padrão",
-                  "additionalProperties": false
-                },
-                "example": {
-                  "error": {
-                    "code": "serverError",
-                    "status": "Internal Server Error",
-                    "details": "If the problem persists, contact support with the correlationId from the response headers.",
-                    "message": "An unexpected error occurred. Please try again later.",
-                    "category": "server",
-                    "resource": "server",
-                    "statusCode": 500
-                  }
-                }
-              }
-            },
-            "description": "Erro interno do servidor"
-          }
-        },
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/SelectwinAccount"
-          }
-        ],
-        "operationId": "recheckPixKeyDestination"
       }
     },
     "/v1/marketplace/kyc/{token}/onboarding/step-1": {
