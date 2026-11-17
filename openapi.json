@@ -17930,7 +17930,7 @@
                         "invoiceLink": {
                           "type": "string",
                           "nullable": true,
-                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no seu domínio de checkout em que a venda foi feita (senão o seu domínio de checkout pronto). `null` quando a sua loja não tem domínio de checkout pronto, e na resposta da criação — preenchido na leitura e nos webhooks."
+                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no seu domínio de checkout em que a venda foi feita (senão o seu domínio de checkout pronto; o domínio da plataforma só quando a sua loja não tem nenhum). `null` na resposta da criação — preenchido na leitura e nos webhooks."
                         },
                         "installments": {
                           "type": "integer",
@@ -55964,7 +55964,7 @@
                   "domainId": {
                     "type": "string",
                     "pattern": "^(dmn|host|cdm)_.+$",
-                    "description": "O host em que a URL é montada: um dos seus domínios de checkout prontos. Omitido = o seu domínio de checkout pronto mais antigo; sem nenhum, o link é recusado (`checkoutDomainRequired`)."
+                    "description": "O host em que a URL é montada: um dos seus domínios de checkout prontos. Omitido = o seu domínio de checkout pronto mais antigo, ou o domínio da plataforma (`pay.selectwin.io`) quando você não tem nenhum."
                   },
                   "editable": {
                     "type": "boolean",
@@ -66951,7 +66951,7 @@
                         "invoiceLink": {
                           "type": "string",
                           "nullable": true,
-                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no seu domínio de checkout em que a venda foi feita (senão o seu domínio de checkout pronto). `null` quando a sua loja não tem domínio de checkout pronto, e na resposta da criação — preenchido na leitura e nos webhooks."
+                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no seu domínio de checkout em que a venda foi feita (senão o seu domínio de checkout pronto; o domínio da plataforma só quando a sua loja não tem nenhum). `null` na resposta da criação — preenchido na leitura e nos webhooks."
                         },
                         "installments": {
                           "type": "integer",
@@ -83566,7 +83566,7 @@
                         "invoiceLink": {
                           "type": "string",
                           "nullable": true,
-                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no seu domínio de checkout em que a venda foi feita (senão o seu domínio de checkout pronto). `null` quando a sua loja não tem domínio de checkout pronto, e na resposta da criação — preenchido na leitura e nos webhooks."
+                          "description": "URL do comprovante hospedado desta cobrança (`{host}/r/…`), no seu domínio de checkout em que a venda foi feita (senão o seu domínio de checkout pronto; o domínio da plataforma só quando a sua loja não tem nenhum). `null` na resposta da criação — preenchido na leitura e nos webhooks."
                         },
                         "installments": {
                           "type": "integer",
