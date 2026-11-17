@@ -30,14 +30,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2   # HEAD + parent, enough to diff the version
+          fetch-depth: 0   # the version BEFORE the push may be more than one commit back (see below)
 
       - name: Detect a version bump
         id: v
         run: |
           NEW=$(node -p "require('./package.json').version")
-          # Read the parent commit's version via stdin — no temp file, no path quirks.
-          OLD=$(git show HEAD~1:package.json 2>/dev/null \
+          # The version BEFORE this push, not HEAD~1: `npm run image:push` pushes its `deploy(image)` pin ON TOP of the
+          # version bump (owner, 17/11/2026), so HEAD~1 already has the new version and the bump went unseen (v0.4.4).
+          # A new branch has no `before`: fall back to the parent. Read via stdin — no temp file, no path quirks.
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then BEFORE=HEAD~1; fi
+          OLD=$(git show "$BEFORE":package.json 2>/dev/null \
                 | node -pe "JSON.parse(require('fs').readFileSync(0,'utf8')).version" 2>/dev/null \
                 || echo "none")
           echo "new=$NEW" >> "$GITHUB_OUTPUT"
