@@ -6,6 +6,11 @@ name: Image (mcp.selectwin.io)
 #   3. pin docker/stack/app.yml to that sha in a `deploy(image): …` commit — the Dokploy stack (Auto Deploy on main)
 #      applies that commit, so the stack only ever moves to an image that exists.
 # The pin commit touches only docker/stack/, outside the paths below, so it does not loop.
+#
+# The image usually goes out FIRST from a workstation (`npm run image:push`, scripts/image-publish.mjs — owner,
+# 17/11/2026: "Mantém o CI, mas adianta com o image:push!"), with its pin pushed on top of the code. So the tag is the
+# sha of the LAST commit that touched the paths below (the same count the script does), not GITHUB_SHA (that would be
+# the pin commit): when that image already exists the build is skipped, and the pin below finds nothing to change.
 
 on:
   push:
@@ -34,6 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the tag is the last commit that touched the paths, not always HEAD
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -48,14 +55,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Which image this push needs
         id: img
         run: |
-          TAG="sha-${GITHUB_SHA::7}"
+          SHA=$(git log -1 --format=%H -- src openapi.json package.json package-lock.json tsconfig.json tsup.config.ts Dockerfile .dockerignore)
+          TAG="sha-${SHA::7}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if docker manifest inspect "ghcr.io/selectwin/mcp:$TAG" >/dev/null 2>&1; then
+            echo "::notice::ghcr.io/selectwin/mcp:$TAG already exists (npm run image:push) — no build"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push
+        if: steps.img.outputs.exists != 'true'
+        env:
+          TAG: ${{ steps.img.outputs.tag }}
+        run: |
           docker build -t "ghcr.io/selectwin/mcp:$TAG" -t ghcr.io/selectwin/mcp:latest .
           docker push "ghcr.io/selectwin/mcp:$TAG"
           docker push ghcr.io/selectwin/mcp:latest
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Pin the stack to this image
         env:

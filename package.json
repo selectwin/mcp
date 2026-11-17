@@ -27,6 +27,7 @@
     "start:http": "node dist/http.js",
     "start:stdio": "node dist/stdio.js",
     "sync:spec": "node scripts/sync-spec.mjs",
+    "image:push": "node scripts/image-publish.mjs",
     "inspect": "npx @modelcontextprotocol/inspector"
   },
   "dependencies": {

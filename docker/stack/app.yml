@@ -1,7 +1,8 @@
 # Selectwin MCP — o servidor hospedado (mcp.selectwin.io) como stack Docker SWARM (Dokploy › serviço tipo "Stack").
 #
-# A imagem é pré-buildada e PUXADA, nunca buildada aqui: o workflow `image.yml` publica `ghcr.io/selectwin/mcp:sha-<7>`
-# e troca o sha abaixo num commit `deploy(image): …` — é esse commit que o Dokploy (Auto Deploy) aplica. Nenhum segredo
+# A imagem é pré-buildada e PUXADA, nunca buildada aqui: o `npm run image:push` (primeiro, daqui) ou o workflow `image.yml`
+# publica `ghcr.io/selectwin/mcp:sha-<7>` e troca o sha abaixo num commit `deploy(image): …` — é esse commit que o Dokploy
+# (Auto Deploy) aplica. Nenhum segredo
 # mora aqui nem no cofre: a SelectKey chega em cada pedido, no cabeçalho do cliente.
 #
 # Caminho do pedido: cliente → borda (TLS de mcp.selectwin.io) → porta PUBLICADA no ingress do swarm → :3000 no

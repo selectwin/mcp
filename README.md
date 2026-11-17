@@ -157,6 +157,7 @@ npm run typecheck   # tsc --noEmit
 npm test            # vitest (spec, docs, api, guards, full protocol via in-memory transport)
 npm run build       # tsup → dist/ (server, http, stdio)
 npm run sync:spec   # refresh openapi.json from selectwin.io
+npm run image:push  # publish the hosted image (ghcr.io/selectwin/mcp:sha-<7>) and pin docker/stack/app.yml; then git push
 docker build -t selectwin-mcp . && docker run -p 3000:3000 -e MCP_HOSTED=true selectwin-mcp
 ```
 

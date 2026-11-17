@@ -1,4 +1,5 @@
-# Selectwin MCP — the hosted Streamable HTTP server (mcp.selectwin.io). Built by .github/workflows/image.yml and
+# Selectwin MCP — the hosted Streamable HTTP server (mcp.selectwin.io). Built by `npm run image:push` (first) or by
+# .github/workflows/image.yml, and
 # pulled by the Swarm stack in docker/stack/app.yml; nothing secret goes in the image or the stack (the SelectKey
 # arrives with each request).
 FROM node:22-alpine AS build
