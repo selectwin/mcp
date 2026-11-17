@@ -76099,7 +76099,6 @@
                     "revenue",
                     "monthlyBillingEstimate",
                     "softdescriptor",
-                    "platformBrand",
                     "mcc",
                     "status",
                     "createdAt",
@@ -76270,10 +76269,6 @@
                       "nullable": true,
                       "description": "CNAE principal da empresa; `null` quando desconhecido; omitido nas leituras do lojista."
                     },
-                    "platformBrand": {
-                      "type": "boolean",
-                      "description": "Se os links dos e-mails enviados aos compradores levam a marca da plataforma (`true`) ou o domínio próprio da empresa (`false`, marca branca)."
-                    },
                     "softdescriptor": {
                       "type": "string",
                       "nullable": true,
@@ -76379,7 +76374,6 @@
                   "reviewDueAt": "string",
                   "documentType": "string",
                   "corporateCnae": "string",
-                  "platformBrand": true,
                   "softdescriptor": "string",
                   "corporateOpenDate": "string",
                   "legalBusinessName": "string",
@@ -95794,7 +95788,6 @@
                     "revenue",
                     "monthlyBillingEstimate",
                     "softdescriptor",
-                    "platformBrand",
                     "mcc",
                     "status",
                     "createdAt",
@@ -95965,10 +95958,6 @@
                       "nullable": true,
                       "description": "CNAE principal da empresa; `null` quando desconhecido; omitido nas leituras do lojista."
                     },
-                    "platformBrand": {
-                      "type": "boolean",
-                      "description": "Se os links dos e-mails enviados aos compradores levam a marca da plataforma (`true`) ou o domínio próprio da empresa (`false`, marca branca)."
-                    },
                     "softdescriptor": {
                       "type": "string",
                       "nullable": true,
@@ -96074,7 +96063,6 @@
                   "reviewDueAt": "string",
                   "documentType": "string",
                   "corporateCnae": "string",
-                  "platformBrand": true,
                   "softdescriptor": "string",
                   "corporateOpenDate": "string",
                   "legalBusinessName": "string",
@@ -96541,7 +96529,6 @@
                     "revenue",
                     "monthlyBillingEstimate",
                     "softdescriptor",
-                    "platformBrand",
                     "mcc",
                     "status",
                     "createdAt",
@@ -96712,10 +96699,6 @@
                       "nullable": true,
                       "description": "CNAE principal da empresa; `null` quando desconhecido; omitido nas leituras do lojista."
                     },
-                    "platformBrand": {
-                      "type": "boolean",
-                      "description": "Se os links dos e-mails enviados aos compradores levam a marca da plataforma (`true`) ou o domínio próprio da empresa (`false`, marca branca)."
-                    },
                     "softdescriptor": {
                       "type": "string",
                       "nullable": true,
@@ -96821,7 +96804,6 @@
                   "reviewDueAt": "string",
                   "documentType": "string",
                   "corporateCnae": "string",
-                  "platformBrand": true,
                   "softdescriptor": "string",
                   "corporateOpenDate": "string",
                   "legalBusinessName": "string",
@@ -97695,7 +97677,6 @@
                     "revenue",
                     "monthlyBillingEstimate",
                     "softdescriptor",
-                    "platformBrand",
                     "mcc",
                     "status",
                     "createdAt",
@@ -97866,10 +97847,6 @@
                       "nullable": true,
                       "description": "CNAE principal da empresa; `null` quando desconhecido; omitido nas leituras do lojista."
                     },
-                    "platformBrand": {
-                      "type": "boolean",
-                      "description": "Se os links dos e-mails enviados aos compradores levam a marca da plataforma (`true`) ou o domínio próprio da empresa (`false`, marca branca)."
-                    },
                     "softdescriptor": {
                       "type": "string",
                       "nullable": true,
@@ -97975,7 +97952,6 @@
                   "reviewDueAt": "string",
                   "documentType": "string",
                   "corporateCnae": "string",
-                  "platformBrand": true,
                   "softdescriptor": "string",
                   "corporateOpenDate": "string",
                   "legalBusinessName": "string",
@@ -98468,7 +98444,6 @@
                     "revenue",
                     "monthlyBillingEstimate",
                     "softdescriptor",
-                    "platformBrand",
                     "mcc",
                     "status",
                     "createdAt",
@@ -98639,10 +98614,6 @@
                       "nullable": true,
                       "description": "CNAE principal da empresa; `null` quando desconhecido; omitido nas leituras do lojista."
                     },
-                    "platformBrand": {
-                      "type": "boolean",
-                      "description": "Se os links dos e-mails enviados aos compradores levam a marca da plataforma (`true`) ou o domínio próprio da empresa (`false`, marca branca)."
-                    },
                     "softdescriptor": {
                       "type": "string",
                       "nullable": true,
@@ -98748,7 +98719,6 @@
                   "reviewDueAt": "string",
                   "documentType": "string",
                   "corporateCnae": "string",
-                  "platformBrand": true,
                   "softdescriptor": "string",
                   "corporateOpenDate": "string",
                   "legalBusinessName": "string",
@@ -99378,7 +99348,6 @@
                         "revenue",
                         "monthlyBillingEstimate",
                         "softdescriptor",
-                        "platformBrand",
                         "mcc",
                         "status",
                         "createdAt",
@@ -99549,10 +99518,6 @@
                           "nullable": true,
                           "description": "CNAE principal da empresa; `null` quando desconhecido; omitido nas leituras do lojista."
                         },
-                        "platformBrand": {
-                          "type": "boolean",
-                          "description": "Se os links dos e-mails enviados aos compradores levam a marca da plataforma (`true`) ou o domínio próprio da empresa (`false`, marca branca)."
-                        },
                         "softdescriptor": {
                           "type": "string",
                           "nullable": true,
@@ -99684,7 +99649,6 @@
                     "reviewDueAt": "string",
                     "documentType": "string",
                     "corporateCnae": "string",
-                    "platformBrand": true,
                     "softdescriptor": "string",
                     "corporateOpenDate": "string",
                     "legalBusinessName": "string",
@@ -100145,7 +100109,6 @@
                     "revenue",
                     "monthlyBillingEstimate",
                     "softdescriptor",
-                    "platformBrand",
                     "mcc",
                     "status",
                     "createdAt",
@@ -100316,10 +100279,6 @@
                       "nullable": true,
                       "description": "CNAE principal da empresa; `null` quando desconhecido; omitido nas leituras do lojista."
                     },
-                    "platformBrand": {
-                      "type": "boolean",
-                      "description": "Se os links dos e-mails enviados aos compradores levam a marca da plataforma (`true`) ou o domínio próprio da empresa (`false`, marca branca)."
-                    },
                     "softdescriptor": {
                       "type": "string",
                       "nullable": true,
@@ -100425,7 +100384,6 @@
                   "reviewDueAt": "string",
                   "documentType": "string",
                   "corporateCnae": "string",
-                  "platformBrand": true,
                   "softdescriptor": "string",
                   "corporateOpenDate": "string",
                   "legalBusinessName": "string",
