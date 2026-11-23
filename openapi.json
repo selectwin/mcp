@@ -38203,6 +38203,94 @@
             },
             "description": "Não encontrado"
           },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "status",
+                        "statusCode",
+                        "category",
+                        "code",
+                        "message",
+                        "resource"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "enum": [
+                            "validation",
+                            "authentication",
+                            "authorization",
+                            "payment",
+                            "client",
+                            "server",
+                            "rate_limit",
+                            "pending"
+                          ],
+                          "type": "string"
+                        },
+                        "resource": {
+                          "type": "string"
+                        },
+                        "statusCode": {
+                          "type": "integer"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "description": "Envelope de erro padrão",
+                  "additionalProperties": false
+                },
+                "example": {
+                  "error": {
+                    "code": "invalidParameters",
+                    "status": "Bad Request",
+                    "message": "Validation errors occurred.",
+                    "category": "validation",
+                    "resource": "server",
+                    "statusCode": 400
+                  }
+                }
+              }
+            },
+            "description": "Regra de negócio impede o processamento"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -75303,6 +75391,94 @@
             },
             "description": "Não encontrado"
           },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "status",
+                        "statusCode",
+                        "category",
+                        "code",
+                        "message",
+                        "resource"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "enum": [
+                            "validation",
+                            "authentication",
+                            "authorization",
+                            "payment",
+                            "client",
+                            "server",
+                            "rate_limit",
+                            "pending"
+                          ],
+                          "type": "string"
+                        },
+                        "resource": {
+                          "type": "string"
+                        },
+                        "statusCode": {
+                          "type": "integer"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "description": "Envelope de erro padrão",
+                  "additionalProperties": false
+                },
+                "example": {
+                  "error": {
+                    "code": "invalidParameters",
+                    "status": "Bad Request",
+                    "message": "Validation errors occurred.",
+                    "category": "validation",
+                    "resource": "server",
+                    "statusCode": 400
+                  }
+                }
+              }
+            },
+            "description": "Regra de negócio impede o processamento"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -77523,6 +77699,94 @@
               }
             },
             "description": "Não encontrado"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "status",
+                        "statusCode",
+                        "category",
+                        "code",
+                        "message",
+                        "resource"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string"
+                        },
+                        "params": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "category": {
+                          "enum": [
+                            "validation",
+                            "authentication",
+                            "authorization",
+                            "payment",
+                            "client",
+                            "server",
+                            "rate_limit",
+                            "pending"
+                          ],
+                          "type": "string"
+                        },
+                        "resource": {
+                          "type": "string"
+                        },
+                        "statusCode": {
+                          "type": "integer"
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "description": "Envelope de erro padrão",
+                  "additionalProperties": false
+                },
+                "example": {
+                  "error": {
+                    "code": "invalidParameters",
+                    "status": "Bad Request",
+                    "message": "Validation errors occurred.",
+                    "category": "validation",
+                    "resource": "server",
+                    "statusCode": 400
+                  }
+                }
+              }
+            },
+            "description": "Regra de negócio impede o processamento"
           },
           "500": {
             "content": {
